@@ -4,7 +4,14 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"time"
+
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+)
+
+const (
+	InputRateLimit = time.Millisecond * 100
 )
 
 
@@ -14,8 +21,19 @@ func runApp() {
 	backend := InitAppBackend(cwd)
 	ui := &backend.UI
 
+	// Rate limit input
+	lastInput := time.Now()
+	inputCapture := func(event *tcell.EventKey) *tcell.EventKey {
+		now := time.Now()
+		if now.Sub(lastInput) < InputRateLimit {
+			return nil
+		}
 
-	if err := tview.NewApplication().SetRoot(ui.Grid, true).SetFocus(ui.Grid).Run(); err != nil {
+		return event
+	}
+
+
+	if err := tview.NewApplication().SetInputCapture(inputCapture).SetRoot(ui.Grid, true).SetFocus(ui.Grid).Run(); err != nil {
 		panic(err)
 	}
 }

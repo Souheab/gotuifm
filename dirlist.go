@@ -6,46 +6,63 @@ import (
 	"path/filepath"
 )
 
+const (
+	Folder = iota
+	File
+)
+
 type DirList struct {
-	Folders []Folder
-	Files   []File
-	UI      *tview.List
+	FSItems        []FSItem
+	UI             *tview.List
+	fileIndexStart int
 }
 
-type Folder struct {
-	Path string
-	Name string
+func (dl *DirList) GetItemAtIndex(index int) *FSItem{
+	if (index >= len(dl.FSItems)) {
+		return nil
+	} else {
+		return &dl.FSItems[index]
+	}
 }
 
-type File struct {
-	Path string
-	Name string
+type FSItem struct {
+	Path     string
+	Name     string
+	Metadata FSItemMetadata
+}
+
+type FSItemMetadata struct {
+	Type int
 }
 
 func NewDirList(path string) (DirList, error) {
 
-	fsItems, err := os.ReadDir(path)
+	fsDirEntry, err := os.ReadDir(path)
 	if err != nil {
-		return DirList{nil, nil, nil}, err
+		return DirList{nil, nil, 0}, err
 	}
 
-	files := make([]File, 0, 0)
-	folders := make([]Folder, 0, 0)
+	files := make([]FSItem, 0, 0)
+	folders := make([]FSItem, 0, 0)
 
-	for _, fsItem := range fsItems {
-		name := fsItem.Name()
-		path := filepath.Join(path, name)
+	for _, fsEntry := range fsDirEntry {
+		name := fsEntry.Name()
+		fsItemPath, _ := filepath.Abs(filepath.Join(path, name))
 
-		if fsItem.IsDir() {
-			folder := Folder{path, fsItem.Name()}
+		if fsEntry.IsDir() {
+			metadata := FSItemMetadata {Folder}
+			folder := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			folders = append(folders, folder)
 		} else {
-			file := File{path, fsItem.Name()}
+			metadata := FSItemMetadata {File}
+			file := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			files = append(files, file)
 		}
 	}
 
+	fsItems := append(folders, files...)
+
 	ui := NewList(folders, files)
 
-	return DirList{folders, files, ui}, nil
+	return DirList{fsItems, ui, len(folders)}, nil
 }

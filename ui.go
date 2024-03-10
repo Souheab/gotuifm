@@ -46,17 +46,17 @@ func InitUI() UI {
 	return UI{listCache , grid}
 }
 
-func NewList(folders []Folder, files []File) *tview.List {
+func NewList(folders []FSItem, files []FSItem) *tview.List {
 	selectedStyle := tcell.StyleDefault.Foreground(tcell.ColorBlue).Reverse(true)
 	list := tview.NewList().ShowSecondaryText(false).SetSelectedStyle(selectedStyle).SetHighlightFullLine(true)
 
 	for _, folder := range folders {
-		list.InsertItem(0, folder.Name, "", 0, nil)
+		list.AddItem( folder.Name, "", 0, nil)
 	}
 
 
 	for _, file := range files {
-		list.InsertItem(0, file.Name, "", 0, nil)
+		list.AddItem( file.Name, "", 0, nil)
 	}
 
 	return list
