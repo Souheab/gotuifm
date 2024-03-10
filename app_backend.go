@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"path/filepath"
+
 )
 
 type AppBackend struct {
@@ -15,8 +16,9 @@ func InitAppBackend(startingPath string) AppBackend {
 	ui := InitUI()
   
 	backend := AppBackend{dlc, ui}
-	DirListCacheAdd(dlc, startingPath)
-	//TODO add UI cache
+	dl := DirListCacheAdd(dlc, startingPath)
+	backend.UI.Grid.AddItem(dl.UI, 1, 1, 1, 1, 0, 0, true)
+	
 	return backend
 }
 

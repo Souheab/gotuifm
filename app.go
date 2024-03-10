@@ -2,16 +2,18 @@ package main
 
 //import "os"
 import (
+	"os"
+	"path/filepath"
 	"github.com/rivo/tview"
 )
 
 
 func runApp() {
-	// dirListCache := make(map[string]DirList)
-	// cwd , _ := os.Getwd()
-	// DirListCacheAdd(dirListCache, cwd)
-	// backend := AppBackend{dirListCache}
-	ui := InitUI()
+	cwd , _ := os.Getwd()
+	cwd, _ = filepath.Abs(cwd)
+	backend := InitAppBackend(cwd)
+	ui := &backend.UI
+
 
 	if err := tview.NewApplication().SetRoot(ui.Grid, true).SetFocus(ui.Grid).Run(); err != nil {
 		panic(err)

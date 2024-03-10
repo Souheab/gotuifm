@@ -10,6 +10,10 @@ type UI struct {
 	Grid      *tview.Grid
 }
 
+func (ui *UI) SetMainList(l *tview.List) {
+	ui.Grid.AddItem(l, 1, 1, 3, 1, 0, 0, true)
+}
+
 func InitUI() UI {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 	// selectedStyle := tcell.StyleDefault.Reverse(true).Foreground(tcell.ColorBlue)
@@ -42,10 +46,9 @@ func InitUI() UI {
 	return UI{listCache , grid}
 }
 
-func NewList(dl *DirList) *tview.List {
-	folders := dl.Folders
-	files := dl.Files
-	list := tview.NewList().ShowSecondaryText(false)
+func NewList(folders []Folder, files []File) *tview.List {
+	selectedStyle := tcell.StyleDefault.Foreground(tcell.ColorBlue).Reverse(true)
+	list := tview.NewList().ShowSecondaryText(false).SetSelectedStyle(selectedStyle).SetHighlightFullLine(true)
 
 	for _, folder := range folders {
 		list.InsertItem(0, folder.Name, "", 0, nil)
@@ -57,5 +60,4 @@ func NewList(dl *DirList) *tview.List {
 	}
 
 	return list
-
 }

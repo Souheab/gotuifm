@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/rivo/tview"
 	"os"
 	"path/filepath"
 )
@@ -8,6 +9,7 @@ import (
 type DirList struct {
 	Folders []Folder
 	Files   []File
+	UI      *tview.List
 }
 
 type Folder struct {
@@ -21,10 +23,10 @@ type File struct {
 }
 
 func NewDirList(path string) (DirList, error) {
-	
+
 	fsItems, err := os.ReadDir(path)
 	if err != nil {
-		return DirList{nil, nil}, err
+		return DirList{nil, nil, nil}, err
 	}
 
 	files := make([]File, 0, 0)
@@ -43,7 +45,7 @@ func NewDirList(path string) (DirList, error) {
 		}
 	}
 
-	return DirList{folders, files}, nil
+	ui := NewList(folders, files)
+
+	return DirList{folders, files, ui}, nil
 }
-
-
