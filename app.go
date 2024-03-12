@@ -23,17 +23,37 @@ func runApp() {
 
 	// Rate limit input
 	lastInput := time.Now()
-	inputCapture := func(event *tcell.EventKey) *tcell.EventKey {
+
+	app := tview.NewApplication()
+	inputHandler := func(event *tcell.EventKey) *tcell.EventKey {
 		now := time.Now()
 		if now.Sub(lastInput) < InputRateLimit {
 			return nil
 		}
 
-		return event
+		switch event.Key() {
+		case tcell.KeyCtrlC:
+			app.Stop()
+		}
+
+		switch event.Rune() {
+		case 'h', 'H':
+			backend.Select(1, 0, DirectionLeft)
+		case 'j', 'J':
+			backend.Select(1, 0, DirectionDown)
+		case 'k', 'K':
+			backend.Select(1, 0, DirectionUp)
+		case 'l', 'L':
+			backend.Select(1, 0, DirectionRight)
+		case 'q', 'Q':
+			app.Stop()
+		}
+		return nil
 	}
 
 
-	if err := tview.NewApplication().SetInputCapture(inputCapture).SetRoot(ui.Grid, true).SetFocus(ui.Grid).Run(); err != nil {
+
+	if err := app.SetInputCapture(inputHandler).SetRoot(ui.Grid, true).SetFocus(ui.Grid).Run(); err != nil {
 		panic(err)
 	}
 }

@@ -12,13 +12,13 @@ const (
 )
 
 type DirList struct {
-	FSItems        []FSItem
-	UI             *tview.List
-	fileIndexStart int
+	*tview.List
+	FSItems []FSItem
+	Path    string
 }
 
-func (dl *DirList) GetItemAtIndex(index int) *FSItem{
-	if (index >= len(dl.FSItems)) {
+func (dl *DirList) GetItemAtIndex(index int) *FSItem {
+	if index >= len(dl.FSItems) {
 		return nil
 	} else {
 		return &dl.FSItems[index]
@@ -39,7 +39,7 @@ func NewDirList(path string) (DirList, error) {
 
 	fsDirEntry, err := os.ReadDir(path)
 	if err != nil {
-		return DirList{nil, nil, 0}, err
+		return DirList{nil, nil, path}, err
 	}
 
 	files := make([]FSItem, 0, 0)
@@ -50,11 +50,11 @@ func NewDirList(path string) (DirList, error) {
 		fsItemPath, _ := filepath.Abs(filepath.Join(path, name))
 
 		if fsEntry.IsDir() {
-			metadata := FSItemMetadata {Folder}
+			metadata := FSItemMetadata{Folder}
 			folder := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			folders = append(folders, folder)
 		} else {
-			metadata := FSItemMetadata {File}
+			metadata := FSItemMetadata{File}
 			file := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			files = append(files, file)
 		}
@@ -62,7 +62,7 @@ func NewDirList(path string) (DirList, error) {
 
 	fsItems := append(folders, files...)
 
-	ui := NewList(folders, files)
+	list := NewList(folders, files)
 
-	return DirList{fsItems, ui, len(folders)}, nil
+	return DirList{list, fsItems, path}, nil
 }

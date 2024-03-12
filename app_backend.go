@@ -8,6 +8,13 @@ import (
 	"github.com/rivo/tview"
 )
 
+const (
+	DirectionLeft = iota
+	DirectionRight
+	DirectionUp
+	DirectionDown
+)
+
 type AppBackend struct {
 	ActiveDirList *DirList
 	DirListCache  map[string]*DirList
@@ -17,44 +24,101 @@ type AppBackend struct {
 func InitAppBackend(startingPath string) *AppBackend {
 	dlc := make(map[string]*DirList)
 	ui := InitUI()
-	dl := DirListCacheAdd(dlc, startingPath)
 
-	backend := AppBackend{dl, dlc, ui}
-	backend.UI.Grid.AddItem(dl.UI, 1, 1, 1, 1, 0, 0, true)
+	backend := AppBackend{nil, dlc, ui}
+	dl := backend.DirListCacheAdd(startingPath)
+	backend.UI.Grid.AddItem(dl, 1, 1, 1, 1, 0, 0, false)
 
-	listChangedFunc := func(index int, mainText string, secondaryText string, shortcut rune) {
-		bP := &backend
-		activeDl := bP.ActiveDirList
-		fsItem := activeDl.GetItemAtIndex(index)
-		if (fsItem == nil) {
-			log.Fatalf("error in listChangedFunc")
-		} else {
-			if fsItem.Metadata.Type == Folder {
-				dl := bP.DirListCacheGetOtherwiseAdd( fsItem.Path)
-				// textBox := tview.NewTextView().SetLabel(fmt.Sprintf("Folder: %v, \n path: %v", fsItem.Name, fsItem.Path))
-				bP.UI.Grid.AddItem( dl.UI, 1, 2 , 1, 1 , 0, 0, false)
-			} else {
-				textBox := tview.NewTextView().SetLabel(fmt.Sprintf("File: %v, \npath: %v", fsItem.Name, fsItem.Path))
-				bP.UI.Grid.AddItem( textBox, 1, 2 , 1, 1 , 0, 0, false)
-			}
+	listChangedFunc := backend.GetListChangedFunc()
 
-			parentPath := filepath.Dir(filepath.Dir(fsItem.Path))
-			dl := bP.DirListCacheGetOtherwiseAdd(parentPath)
-			bP.UI.Grid.AddItem( dl.UI, 1, 0 , 1, 1 , 0, 0, false)
-		}
-	}
-
-	dl.UI.SetChangedFunc(listChangedFunc)
-
+	dl.SetChangedFunc(listChangedFunc)
+	backend.ActiveDirList = dl
 
 	return &backend
 }
 
-func (b *AppBackend) DirListCacheGetOtherwiseAdd(path string) *DirList {
-	return DirListCacheGetOtherwiseAdd(b.DirListCache, path)
+func (b *AppBackend) Select(n int, initialIndex int, direction int) {
+	if n <= 0 {
+		return
+	}
+
+	acDl := b.ActiveDirList
+
+	switch direction {
+	case DirectionLeft:
+		path := acDl.Path
+		for range n {
+			path = filepath.Dir(path)
+		}
+		dl := b.DirListCacheGetOtherwiseAdd(path)
+		b.MakeActiveDirlist(dl, initialIndex)
+	case DirectionUp, DirectionDown:
+		currentIndex := acDl.GetCurrentItem()
+		targetIndex := 0
+		if direction == DirectionUp {
+			targetIndex = currentIndex - n
+		} else {
+			targetIndex = currentIndex + n
+		}
+		targetIndex = targetIndex % b.ActiveDirList.GetItemCount()
+		acDl.SetCurrentItem(targetIndex)
+	case DirectionRight:
+		fsItem := acDl.GetItemAtIndex(acDl.GetCurrentItem())
+		if fsItem.Metadata.Type == Folder {
+			dl := b.DirListCacheGetOtherwiseAdd(fsItem.Path)
+			b.MakeActiveDirlist(dl , 0)
+		}
+	}
 }
 
-func DirListCacheAdd(dlc map[string]*DirList, path string) *DirList {
+func (b *AppBackend) MakeActiveDirlist(dl *DirList, initialIndex int) {
+	dl.List.SetCurrentItem(initialIndex)
+	b.UI.Grid.RemoveItem(b.ActiveDirList)
+	b.ActiveDirList = dl
+	b.UI.Grid.AddItem(dl, 1, 1, 1, 1, 0, 0, false)
+	fsItem := dl.GetItemAtIndex(initialIndex)
+	if fsItem == nil {
+		log.Fatalf("error in MakeActiveDirList")
+	} else {
+		if fsItem.Metadata.Type == Folder {
+			dl := b.DirListCacheGetOtherwiseAdd(fsItem.Path)
+			// textBox := tview.NewTextView().SetLabel(fmt.Sprintf("Folder: %v, \n path: %v", fsItem.Name, fsItem.Path))
+			b.UI.Grid.AddItem(dl, 1, 2, 1, 1, 0, 0, false)
+		} else {
+			textBox := tview.NewTextView().SetLabel(fmt.Sprintf("File: %v, \npath: %v", fsItem.Name, fsItem.Path))
+			b.UI.Grid.AddItem(textBox, 1, 2, 1, 1, 0, 0, false)
+		}
+
+		parentPath := filepath.Dir(dl.Path)
+		dl := b.DirListCacheGetOtherwiseAdd(parentPath)
+		b.UI.Grid.AddItem(dl, 1, 0, 1, 1, 0, 0, false)
+	}
+}
+
+func (b *AppBackend) GetListChangedFunc() func(index int, mainText string, secondaryText string, shortcut rune) {
+	return func(index int, mainText string, secondaryText string, shortcut rune) {
+		activeDl := b.ActiveDirList
+		fsItem := activeDl.GetItemAtIndex(index)
+		if fsItem == nil {
+			log.Fatalf("error in listChangedFunc")
+		} else {
+			if fsItem.Metadata.Type == Folder {
+				dl := b.DirListCacheGetOtherwiseAdd(fsItem.Path)
+				b.UI.Grid.AddItem(dl, 1, 2, 1, 1, 0, 0, false)
+			} else {
+				textBox := tview.NewTextView().SetLabel(fmt.Sprintf("File: %v, \npath: %v", fsItem.Name, fsItem.Path))
+				b.UI.Grid.AddItem(textBox, 1, 2, 1, 1, 0, 0, false)
+			}
+
+			parentPath := filepath.Dir(filepath.Dir(fsItem.Path))
+			dl := b.DirListCacheGetOtherwiseAdd(parentPath)
+			b.UI.Grid.AddItem(dl, 1, 0, 1, 1, 0, 0, false)
+		}
+	}
+}
+
+func (b *AppBackend) DirListCacheAdd(path string) *DirList {
+	dlc := b.DirListCache
 	path, err := filepath.Abs(path)
 	if err != nil {
 		log.Fatalf("%+v", err)
@@ -64,21 +128,25 @@ func DirListCacheAdd(dlc map[string]*DirList, path string) *DirList {
 		if err != nil {
 			log.Fatalf("%+v", err)
 		}
-		dlc[path] = &dl
+		dlP := &dl
+		dlc[path] = dlP
 
-		return &dl
+		f := b.GetListChangedFunc()
+		dlP.SetChangedFunc(f)
+
+		return dlP
 	}
 
 	return nil
 }
 
-func DirListCacheGetOtherwiseAdd(dlc map[string]*DirList, path string) *DirList {
+func (b *AppBackend) DirListCacheGetOtherwiseAdd(path string) *DirList {
+	dlc := b.DirListCache
 	dl, ok := dlc[path]
 
 	if ok {
 		return dl
 	} else {
-		return DirListCacheAdd(dlc, path)
+		return b.DirListCacheAdd(path)
 	}
-
 }
