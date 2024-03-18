@@ -5,6 +5,7 @@ import (
 	"log"
 	"path/filepath"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -19,22 +20,36 @@ type AppBackend struct {
 	ActiveDirList *DirList
 	DirListCache  map[string]*DirList
 	UI            UI
+	DotfilesFlag  bool
 }
 
 func InitAppBackend(startingPath string) *AppBackend {
 	dlc := make(map[string]*DirList)
 	ui := InitUI()
 
-	backend := AppBackend{nil, dlc, ui}
-	dl := backend.DirListCacheAdd(startingPath)
-	backend.UI.Grid.AddItem(dl, 1, 1, 1, 1, 0, 0, false)
+	b := AppBackend{nil, dlc, ui, true}
+	bP := &b
 
-	listChangedFunc := backend.GetListChangedFunc()
+	NewList = func(items []*FSItem) *tview.List {
+		selectedStyle := tcell.StyleDefault.Foreground(tcell.ColorBlue).Reverse(true)
+		list := tview.NewList().ShowSecondaryText(false).SetSelectedStyle(selectedStyle).SetHighlightFullLine(true)
 
-	dl.SetChangedFunc(listChangedFunc)
-	backend.ActiveDirList = dl
+		for _, item := range items {
+			list.AddItem( item.Name, "", 0, nil)
+		}
 
-	return &backend
+		f := bP.GetListChangedFunc()
+		list.SetChangedFunc(f)
+
+		return list
+	}
+
+	dl := bP.DirListCacheAdd(startingPath)
+	bP.UI.Grid.AddItem(dl, 1, 1, 1, 1, 0, 0, false)
+	bP.ActiveDirList = dl
+
+
+	return bP
 }
 
 func (b *AppBackend) Select(n int, initialIndex int, direction int) {
@@ -66,9 +81,22 @@ func (b *AppBackend) Select(n int, initialIndex int, direction int) {
 		fsItem := acDl.GetItemAtIndex(acDl.GetCurrentItem())
 		if fsItem.Metadata.Type == Folder {
 			dl := b.DirListCacheGetOtherwiseAdd(fsItem.Path)
-			b.MakeActiveDirlist(dl , 0)
+			b.MakeActiveDirlist(dl, 0)
 		}
 	}
+}
+
+func (b *AppBackend) SetDotfilesVisibility (visibility bool) {
+	if b.DotfilesFlag == visibility {
+		return
+	}
+
+	b.DotfilesFlag = visibility
+	b.ActiveDirList.SetDotfilesVisibility(visibility)
+}
+
+func (b *AppBackend) ToggleDotfilesVisibility() {
+	b.SetDotfilesVisibility(!b.DotfilesFlag)
 }
 
 func (b *AppBackend) MakeActiveDirlist(dl *DirList, initialIndex int) {
@@ -76,23 +104,7 @@ func (b *AppBackend) MakeActiveDirlist(dl *DirList, initialIndex int) {
 	b.UI.Grid.RemoveItem(b.ActiveDirList)
 	b.ActiveDirList = dl
 	b.UI.Grid.AddItem(dl, 1, 1, 1, 1, 0, 0, false)
-	fsItem := dl.GetItemAtIndex(initialIndex)
-	if fsItem == nil {
-		log.Fatalf("error in MakeActiveDirList")
-	} else {
-		if fsItem.Metadata.Type == Folder {
-			dl := b.DirListCacheGetOtherwiseAdd(fsItem.Path)
-			// textBox := tview.NewTextView().SetLabel(fmt.Sprintf("Folder: %v, \n path: %v", fsItem.Name, fsItem.Path))
-			b.UI.Grid.AddItem(dl, 1, 2, 1, 1, 0, 0, false)
-		} else {
-			textBox := tview.NewTextView().SetLabel(fmt.Sprintf("File: %v, \npath: %v", fsItem.Name, fsItem.Path))
-			b.UI.Grid.AddItem(textBox, 1, 2, 1, 1, 0, 0, false)
-		}
-
-		parentPath := filepath.Dir(dl.Path)
-		dl := b.DirListCacheGetOtherwiseAdd(parentPath)
-		b.UI.Grid.AddItem(dl, 1, 0, 1, 1, 0, 0, false)
-	}
+	dl.SetDotfilesVisibility(b.DotfilesFlag)
 }
 
 func (b *AppBackend) GetListChangedFunc() func(index int, mainText string, secondaryText string, shortcut rune) {
@@ -104,6 +116,7 @@ func (b *AppBackend) GetListChangedFunc() func(index int, mainText string, secon
 		} else {
 			if fsItem.Metadata.Type == Folder {
 				dl := b.DirListCacheGetOtherwiseAdd(fsItem.Path)
+				dl.SetDotfilesVisibility(b.DotfilesFlag)
 				b.UI.Grid.AddItem(dl, 1, 2, 1, 1, 0, 0, false)
 			} else {
 				textBox := tview.NewTextView().SetLabel(fmt.Sprintf("File: %v, \npath: %v", fsItem.Name, fsItem.Path))
@@ -112,6 +125,7 @@ func (b *AppBackend) GetListChangedFunc() func(index int, mainText string, secon
 
 			parentPath := filepath.Dir(filepath.Dir(fsItem.Path))
 			dl := b.DirListCacheGetOtherwiseAdd(parentPath)
+			dl.SetDotfilesVisibility(b.DotfilesFlag)
 			b.UI.Grid.AddItem(dl, 1, 0, 1, 1, 0, 0, false)
 		}
 	}
@@ -130,9 +144,6 @@ func (b *AppBackend) DirListCacheAdd(path string) *DirList {
 		}
 		dlP := &dl
 		dlc[path] = dlP
-
-		f := b.GetListChangedFunc()
-		dlP.SetChangedFunc(f)
 
 		return dlP
 	}

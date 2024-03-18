@@ -5,6 +5,10 @@ import (
 	"github.com/rivo/tview"
 )
 
+// Global function that will take AppBackend clojure
+// This function is instantiated in InitAppBackend function
+var NewList func(items []*FSItem) *tview.List
+
 type UI struct {
 	ListCache map[string]*tview.List
 	Grid      *tview.Grid
@@ -44,20 +48,4 @@ func InitUI() UI {
 	listCache := make(map[string]*tview.List)
 
 	return UI{listCache , grid}
-}
-
-func NewList(folders []FSItem, files []FSItem) *tview.List {
-	selectedStyle := tcell.StyleDefault.Foreground(tcell.ColorBlue).Reverse(true)
-	list := tview.NewList().ShowSecondaryText(false).SetSelectedStyle(selectedStyle).SetHighlightFullLine(true)
-
-	for _, folder := range folders {
-		list.AddItem( folder.Name, "", 0, nil)
-	}
-
-
-	for _, file := range files {
-		list.AddItem( file.Name, "", 0, nil)
-	}
-
-	return list
 }

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	InputRateLimit = time.Millisecond * 100
+	InputRateLimit = time.Millisecond * 10
 )
 
 
@@ -45,6 +45,8 @@ func runApp() {
 			backend.Select(1, 0, DirectionUp)
 		case 'l', 'L':
 			backend.Select(1, 0, DirectionRight)
+		case '.':
+			backend.ToggleDotfilesVisibility()
 		case 'q', 'Q':
 			app.Stop()
 		}
