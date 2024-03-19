@@ -33,17 +33,6 @@ func (b *AppBackend) StartAppBackend(startingPath string) {
 	b.MakeActiveDirlist(dl)
 }
 
-// func InitAppBackend(startingPath string) *AppBackend {
-// 	dlc := make(map[string]*DirList)
-// 	ui := InitUI()
-
-// 	b := AppBackend{nil, dlc, ui, false}
-// 	bP := &b
-
-
-// 	return bP
-// }
-
 func (b *AppBackend) Select(n int, initialIndex int, direction int) {
 	if n <= 0 {
 		return
