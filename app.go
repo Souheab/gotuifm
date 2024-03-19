@@ -1,11 +1,9 @@
 package main
 
-//import "os"
 import (
 	"os"
 	"path/filepath"
 	"time"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
