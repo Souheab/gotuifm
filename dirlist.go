@@ -76,6 +76,7 @@ type FSItem struct {
 
 type FSItemMetadata struct {
 	Type int
+	Readable bool
 }
 
 func NewDirList(path string) (DirList, error) {
@@ -93,11 +94,11 @@ func NewDirList(path string) (DirList, error) {
 		fsItemPath, _ := filepath.Abs(filepath.Join(path, name))
 
 		if fsEntry.IsDir() {
-			metadata := FSItemMetadata{Folder}
+			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath)}
 			folder := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			folders = append(folders, &folder)
 		} else {
-			metadata := FSItemMetadata{File}
+			metadata := FSItemMetadata{File, true}
 			file := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			files = append(files, &file)
 		}

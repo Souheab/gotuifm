@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"os/user"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -12,6 +16,7 @@ var NewList func(items []*FSItem) *tview.List
 type UI struct {
 	ListCache map[string]*tview.List
 	Grid      *tview.Grid
+	CurrentPath *tview.TextView
 }
 
 func (ui *UI) SetMainList(l *tview.List) {
@@ -20,26 +25,28 @@ func (ui *UI) SetMainList(l *tview.List) {
 
 func InitUI() UI {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
-	// selectedStyle := tcell.StyleDefault.Reverse(true).Foreground(tcell.ColorBlue)
 
-	// midList := tview.NewList().
-	// 	AddItem("hello", "", 0, nil).
-	// 	AddItem("World", "", 0, nil).
-	// 	AddItem("!", "", 0, nil).
-	// 	AddItem("qw[yellow::l]ertyi[-]opasdfghjkl;", "", 0, nil).
-	// 	ShowSecondaryText(false).
-	// 	SetHighlightFullLine(true).
-	// 	SetSelectedStyle(selectedStyle)
+	hostname, _ := os.Hostname()
+	user, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	username := user.Username
 
-	// leftList := tview.NewList().
-	// 	ShowSecondaryText(false)
-	// rightList := tview.NewList().
-	// 	ShowSecondaryText(false)
-	header := tview.NewTextView()
+	usernameHostnameTextBox := tview.NewTextView()
+	currentPath := tview.NewTextView().SetText("test")
+	header := tview.NewFlex()
 	footer := tview.NewTextView()
 
+	usernameHostnameTextBox.SetTextStyle(tcell.StyleDefault.Foreground(tcell.ColorGreen).Bold(true))
+	usernameHostnameString := fmt.Sprintf("%v@%v:", username, hostname)
+	usernameHostnameTextBox.SetText(usernameHostnameString)
+
+	header.AddItem(usernameHostnameTextBox, len(usernameHostnameString), 1, false)
+	header.AddItem(currentPath, 0, 1, false)
+
 	grid := tview.NewGrid().
-		SetRows(3, 0, 3).
+		SetRows(1, 0, 1).
 		SetColumns(0, 0, 0).
 		SetBorders(true).
 		AddItem(header, 0, 0, 1, 3, 0, 0, false).
@@ -47,5 +54,5 @@ func InitUI() UI {
 
 	listCache := make(map[string]*tview.List)
 
-	return UI{listCache , grid}
+	return UI{listCache , grid, currentPath}
 }
