@@ -14,12 +14,16 @@ const (
 	InputRateLimit = time.Millisecond * 10
 )
 
+// Single Source of Truth for this program
+// Accesible Globally
+var BackendPointer *AppBackend
 
 func runApp() {
 	cwd , _ := os.Getwd()
 	cwd, _ = filepath.Abs(cwd)
-	backend := InitAppBackend(cwd)
-	ui := &backend.UI
+	BackendPointer = CreateAppBackend()
+	BackendPointer.StartAppBackend(cwd)
+	ui := &BackendPointer.UI
 
 	// Rate limit input
 	lastInput := time.Now()
@@ -38,15 +42,15 @@ func runApp() {
 
 		switch event.Rune() {
 		case 'h', 'H':
-			backend.Select(1, 0, DirectionLeft)
+			BackendPointer.Select(1, 0, DirectionLeft)
 		case 'j', 'J':
-			backend.Select(1, 0, DirectionDown)
+			BackendPointer.Select(1, 0, DirectionDown)
 		case 'k', 'K':
-			backend.Select(1, 0, DirectionUp)
+			BackendPointer.Select(1, 0, DirectionUp)
 		case 'l', 'L':
-			backend.Select(1, 0, DirectionRight)
+			BackendPointer.Select(1, 0, DirectionRight)
 		case '.':
-			backend.ToggleDotfilesVisibility()
+			BackendPointer.ToggleDotfilesVisibility()
 		case 'q', 'Q':
 			app.Stop()
 		}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"log"
 	"path/filepath"
@@ -22,32 +21,28 @@ type AppBackend struct {
 	DotfilesFlag  bool
 }
 
-func InitAppBackend(startingPath string) *AppBackend {
-	dlc := make(map[string]*DirList)
+func CreateAppBackend() *AppBackend {
+	dlc  :=  make(map[string]*DirList)
 	ui := InitUI()
-
 	b := AppBackend{nil, dlc, ui, false}
-	bP := &b
-
-	NewList = func(items []*FSItem) *tview.List {
-		selectedStyle := tcell.StyleDefault.Foreground(tcell.ColorBlue).Reverse(true)
-		list := tview.NewList().ShowSecondaryText(false).SetSelectedStyle(selectedStyle).SetHighlightFullLine(true)
-
-		for _, item := range items {
-			list.AddItem(item.Name, "", 0, nil)
-		}
-
-		f := bP.GetListChangedFunc()
-		list.SetChangedFunc(f)
-
-		return list
-	}
-
-	dl := bP.DirListCacheAdd(startingPath)
-	bP.MakeActiveDirlist(dl)
-
-	return bP
+	return &b
 }
+
+func (b *AppBackend) StartAppBackend(startingPath string) {
+	dl := b.DirListCacheAdd(startingPath)
+	b.MakeActiveDirlist(dl)
+}
+
+// func InitAppBackend(startingPath string) *AppBackend {
+// 	dlc := make(map[string]*DirList)
+// 	ui := InitUI()
+
+// 	b := AppBackend{nil, dlc, ui, false}
+// 	bP := &b
+
+
+// 	return bP
+// }
 
 func (b *AppBackend) Select(n int, initialIndex int, direction int) {
 	if n <= 0 {

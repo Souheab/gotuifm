@@ -9,9 +9,19 @@ import (
 	"github.com/rivo/tview"
 )
 
-// Global function that will take AppBackend clojure
-// This function is instantiated in InitAppBackend function
-var NewList func(items []*FSItem) *tview.List
+func NewList(items []*FSItem) *tview.List {
+	selectedStyle := tcell.StyleDefault.Foreground(tcell.ColorBlue).Reverse(true)
+	list := tview.NewList().ShowSecondaryText(false).SetSelectedStyle(selectedStyle).SetHighlightFullLine(true)
+
+	for _, item := range items {
+		list.AddItem(item.Name, "", 0, nil)
+	}
+
+	f := BackendPointer.GetListChangedFunc()
+	list.SetChangedFunc(f)
+
+	return list
+}
 
 type UI struct {
 	ListCache map[string]*tview.List
