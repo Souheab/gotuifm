@@ -3,13 +3,10 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"time"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-)
-
-const (
-	InputRateLimit = time.Millisecond * 10
+	"golang.org/x/time/rate"
 )
 
 // Single Source of Truth for this program
@@ -17,24 +14,22 @@ const (
 var BackendPointer *AppBackend
 
 func runApp() {
-	cwd , _ := os.Getwd()
+	cwd, _ := os.Getwd()
 	cwd, _ = filepath.Abs(cwd)
 	BackendPointer = CreateAppBackend()
 	BackendPointer.StartAppBackend(cwd)
 	ui := &BackendPointer.UI
 
 	// Rate limit input
-	lastInput := time.Now()
-
+	limiter := rate.NewLimiter(rate.Limit(30), 5)
 	app := tview.NewApplication()
 	inputHandler := func(event *tcell.EventKey) *tcell.EventKey {
-		now := time.Now()
-		if now.Sub(lastInput) < InputRateLimit {
+		if !limiter.Allow() {
 			return nil
 		}
 
 		switch event.Key() {
-		case tcell.KeyCtrlC:
+		case tcell.KeyCtrlC, tcell.KeyCtrlD:
 			app.Stop()
 		}
 
@@ -55,11 +50,7 @@ func runApp() {
 		return nil
 	}
 
-
-
 	if err := app.SetInputCapture(inputHandler).SetRoot(ui.Grid, true).SetFocus(ui.Grid).Run(); err != nil {
 		panic(err)
 	}
 }
-
-

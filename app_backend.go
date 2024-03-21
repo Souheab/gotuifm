@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/rivo/tview"
 	"log"
 	"path/filepath"
+
+	"github.com/rivo/tview"
 )
 
 const (
@@ -22,7 +23,7 @@ type AppBackend struct {
 }
 
 func CreateAppBackend() *AppBackend {
-	dlc  :=  make(map[string]*DirList)
+	dlc := make(map[string]*DirList)
 	ui := InitUI()
 	b := AppBackend{nil, dlc, ui, false}
 	return &b
@@ -60,7 +61,7 @@ func (b *AppBackend) Select(n int, initialIndex int, direction int) {
 		acDl.SetCurrentItem(targetIndex)
 	case DirectionRight:
 		fsItem := acDl.GetItemAtIndex(acDl.GetCurrentItem())
-		if fsItem.Metadata.Type == Folder && fsItem.Metadata.Readable{
+		if fsItem.Metadata.Type == Folder && fsItem.Metadata.Readable {
 			dl := b.DirListCacheGetOtherwiseAdd(fsItem.Path)
 			b.MakeActiveDirlist(dl)
 		}
