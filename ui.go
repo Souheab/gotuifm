@@ -9,6 +9,9 @@ import (
 	"github.com/rivo/tview"
 )
 
+var PermissionDeniedTextBox *tview.TextView
+var EmptyDirTextBox *tview.TextView
+
 func NewList(items []*FSItem) *tview.List {
 	selectedStyle := tcell.StyleDefault.Foreground(tcell.ColorBlue).Reverse(true)
 	list := tview.NewList().ShowSecondaryText(false).SetSelectedStyle(selectedStyle).SetHighlightFullLine(true)
@@ -35,6 +38,9 @@ func (ui *UI) SetMainList(l *tview.List) {
 
 func InitUI() UI {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
+
+	PermissionDeniedTextBox = tview.NewTextView().SetLabel("[white:red]Permission Denied")
+	EmptyDirTextBox = tview.NewTextView().SetLabel("[white::r]empty")
 
 	hostname, _ := os.Hostname()
 	user, err := user.Current()

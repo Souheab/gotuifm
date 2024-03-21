@@ -21,7 +21,7 @@ func runApp() {
 	ui := &BackendPointer.UI
 
 	// Rate limit input
-	limiter := rate.NewLimiter(rate.Limit(30), 5)
+	limiter := rate.NewLimiter(rate.Limit(20), 5)
 	app := tview.NewApplication()
 	inputHandler := func(event *tcell.EventKey) *tcell.EventKey {
 		if !limiter.Allow() {

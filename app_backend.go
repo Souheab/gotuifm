@@ -54,10 +54,12 @@ func (b *AppBackend) Select(n int, initialIndex int, direction int) {
 		targetIndex := 0
 		if direction == DirectionUp {
 			targetIndex = currentIndex - n
+			if targetIndex < 0 {
+				targetIndex = 0
+			}
 		} else {
 			targetIndex = currentIndex + n
 		}
-		targetIndex = targetIndex % b.ActiveDirList.GetItemCount()
 		acDl.SetCurrentItem(targetIndex)
 	case DirectionRight:
 		fsItem := acDl.GetItemAtIndex(acDl.GetCurrentItem())
@@ -101,10 +103,13 @@ func (b *AppBackend) GetListChangedFunc() func(index int, mainText string, secon
 				if fsItem.Metadata.Readable {
 					dl := b.DirListCacheGetOtherwiseAdd(fsItem.Path)
 					dl.SetDotfilesVisibility(b.DotfilesFlag)
-					b.UI.Grid.AddItem(dl, 1, 2, 1, 1, 0, 0, false)
+					if len(dl.FilteredItems) == 0 {
+						b.UI.Grid.AddItem(EmptyDirTextBox, 1, 2, 1, 1, 0, 0, false)
+					} else {
+						b.UI.Grid.AddItem(dl, 1, 2, 1, 1, 0, 0, false)
+					}
 				} else {
-					textBox := tview.NewTextView().SetLabel("[white:red]Permission Denied")
-					b.UI.Grid.AddItem(textBox, 1, 2, 1, 1, 0, 0, false)
+					b.UI.Grid.AddItem(PermissionDeniedTextBox, 1, 2, 1, 1, 0, 0, false)
 				}
 			} else {
 				textBox := tview.NewTextView().SetLabel(fmt.Sprintf("File: %v, \npath: %v", fsItem.Name, fsItem.Path))

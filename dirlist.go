@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/rivo/tview"
 	"os"
 	"path/filepath"
+
+	"github.com/rivo/tview"
 )
 
 const (
@@ -21,9 +22,6 @@ type DirList struct {
 
 func (dl *DirList) GetItemAtIndex(index int) *FSItem {
 	fsItems := dl.FilteredItems
-	if fsItems == nil {
-		fsItems = dl.FSItems
-	}
 
 	if index >= len(fsItems) {
 		return nil
@@ -46,7 +44,7 @@ func (dl *DirList) SetFilter(f func(fsItem *FSItem) bool) {
 }
 
 func (dl *DirList) RemoveFilter() {
-	dl.FilteredItems = nil
+	dl.FilteredItems = dl.FSItems
 	dl.List = NewList(dl.FSItems)
 }
 
@@ -108,5 +106,5 @@ func NewDirList(path string) (DirList, error) {
 
 	list := NewList(fsItems)
 
-	return DirList{list, fsItems,  nil, path, true}, nil
+	return DirList{list, fsItems,  fsItems, path, true}, nil
 }
