@@ -20,12 +20,13 @@ type AppBackend struct {
 	DirListCache  map[string]*DirList
 	UI            UI
 	DotfilesFlag  bool
+	InputCount    string
 }
 
 func CreateAppBackend() *AppBackend {
 	dlc := make(map[string]*DirList)
 	ui := InitUI()
-	b := AppBackend{nil, dlc, ui, false}
+	b := AppBackend{nil, dlc, ui, false, ""}
 	return &b
 }
 
@@ -35,8 +36,12 @@ func (b *AppBackend) StartAppBackend(startingPath string) {
 }
 
 func (b *AppBackend) Select(n int, initialIndex int, direction int) {
-	if n <= 0 {
+	if n < 0 {
 		return
+	}
+
+	if n == 0 {
+		n = 1
 	}
 
 	acDl := b.ActiveDirList
@@ -163,4 +168,14 @@ func (b *AppBackend) DirListCacheGetOtherwiseAdd(path string) *DirList {
 	} else {
 		return b.DirListCacheAdd(path)
 	}
+}
+
+func (b *AppBackend) AddToInputCount(inputKeyRune rune) {
+	b.InputCount = fmt.Sprintf("%s%c", b.InputCount, inputKeyRune)
+	b.UI.InputCount.SetText(b.InputCount)
+}
+
+func (b *AppBackend) ClearInputCount() {
+	b.InputCount = ""
+	b.UI.InputCount.SetText("")
 }

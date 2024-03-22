@@ -74,7 +74,7 @@ type FSItem struct {
 }
 
 type FSItemMetadata struct {
-	Type int
+	Type     int
 	Readable bool
 	MimeType *mimetype.MIME
 }
@@ -92,7 +92,7 @@ func NewDirList(path string) (DirList, error) {
 	for _, fsEntry := range fsDirEntry {
 		name := fsEntry.Name()
 		fsItemPath, _ := filepath.Abs(filepath.Join(path, name))
-		mime , _:= mimetype.DetectFile(fsItemPath)
+		mime, _ := mimetype.DetectFile(fsItemPath)
 
 		if fsEntry.IsDir() {
 			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), mime}
@@ -109,5 +109,5 @@ func NewDirList(path string) (DirList, error) {
 
 	list := NewList(fsItems)
 
-	return DirList{list, fsItems,  fsItems, path, true}, nil
+	return DirList{list, fsItems, fsItems, path, true}, nil
 }

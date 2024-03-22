@@ -8,8 +8,8 @@ import (
 
 const (
 	FolderIcon = ''
-  FileIcon = ''
-	ImageIcon = ''
+	FileIcon   = ''
+	ImageIcon  = ''
 	GoLangIcon = ''
 )
 
@@ -25,4 +25,3 @@ func GetMimeTypeIcon(mime *mimetype.MIME) rune {
 
 	return FileIcon
 }
-

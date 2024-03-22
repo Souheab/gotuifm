@@ -33,9 +33,10 @@ func NewList(items []*FSItem) *tview.List {
 }
 
 type UI struct {
-	ListCache map[string]*tview.List
-	Grid      *tview.Grid
+	ListCache   map[string]*tview.List
+	Grid        *tview.Grid
 	CurrentPath *tview.TextView
+	InputCount  *tview.TextView
 }
 
 func (ui *UI) SetMainList(l *tview.List) {
@@ -58,7 +59,7 @@ func InitUI() UI {
 	usernameHostnameTextBox := tview.NewTextView()
 	currentPath := tview.NewTextView().SetText("test")
 	header := tview.NewFlex()
-	footer := tview.NewTextView()
+	footer := tview.NewTextView().SetTextStyle(tcell.StyleDefault.Foreground(tcell.ColorYellow))
 
 	usernameHostnameTextBox.SetTextStyle(tcell.StyleDefault.Foreground(tcell.ColorGreen).Bold(true))
 	usernameHostnameString := fmt.Sprintf("%v@%v:", username, hostname)
@@ -76,5 +77,5 @@ func InitUI() UI {
 
 	listCache := make(map[string]*tview.List)
 
-	return UI{listCache , grid, currentPath}
+	return UI{listCache, grid, currentPath, footer}
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -31,15 +32,30 @@ func runApp() {
 		switch event.Key() {
 		case tcell.KeyCtrlC, tcell.KeyCtrlD:
 			app.Stop()
+		case tcell.KeyEsc:
+			BackendPointer.InputCount = ""
+			return nil
 		}
 
-		switch event.Rune() {
+		inputKeyRune := event.Rune()
+		if inputKeyRune >= '0' && inputKeyRune <= '9' {
+			BackendPointer.AddToInputCount(inputKeyRune)
+			return nil
+		}
+
+		inputTimes := 1
+		if BackendPointer.InputCount != "" {
+			inputTimes, _ = strconv.Atoi(BackendPointer.InputCount)
+			BackendPointer.ClearInputCount()
+		}
+
+		switch inputKeyRune {
 		case 'h', 'H':
 			BackendPointer.Select(1, 0, DirectionLeft)
 		case 'j', 'J':
-			BackendPointer.Select(1, 0, DirectionDown)
+			BackendPointer.Select(inputTimes, 0, DirectionDown)
 		case 'k', 'K':
-			BackendPointer.Select(1, 0, DirectionUp)
+			BackendPointer.Select(inputTimes, 0, DirectionUp)
 		case 'l', 'L':
 			BackendPointer.Select(1, 0, DirectionRight)
 		case '.':
