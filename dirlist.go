@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/rivo/tview"
 )
 
@@ -75,6 +76,7 @@ type FSItem struct {
 type FSItemMetadata struct {
 	Type int
 	Readable bool
+	MimeType *mimetype.MIME
 }
 
 func NewDirList(path string) (DirList, error) {
@@ -90,13 +92,14 @@ func NewDirList(path string) (DirList, error) {
 	for _, fsEntry := range fsDirEntry {
 		name := fsEntry.Name()
 		fsItemPath, _ := filepath.Abs(filepath.Join(path, name))
+		mime , _:= mimetype.DetectFile(fsItemPath)
 
 		if fsEntry.IsDir() {
-			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath)}
+			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), mime}
 			folder := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			folders = append(folders, &folder)
 		} else {
-			metadata := FSItemMetadata{File, true}
+			metadata := FSItemMetadata{File, true, mime}
 			file := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			files = append(files, &file)
 		}

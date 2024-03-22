@@ -17,7 +17,13 @@ func NewList(items []*FSItem) *tview.List {
 	list := tview.NewList().ShowSecondaryText(false).SetSelectedStyle(selectedStyle).SetHighlightFullLine(true)
 
 	for _, item := range items {
-		list.AddItem(item.Name, "", 0, nil)
+		list_text := item.Name
+		if item.Metadata.Type == Folder {
+			list_text = fmt.Sprintf(" %c %s", FolderIcon, list_text)
+		} else {
+			list_text = fmt.Sprintf(" %c %s", GetMimeTypeIcon(item.Metadata.MimeType), list_text)
+		}
+		list.AddItem(list_text, "", 0, nil)
 	}
 
 	f := BackendPointer.GetListChangedFunc()
