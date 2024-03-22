@@ -1,5 +1,5 @@
-github.com/Souheab/tview v0.0.0-20240308012803-a989568e6322 h1:kDhgjFQzlLb/Oj+zCc6giN9NueY1+1KgXZzmbTk0K6w=
-github.com/Souheab/tview v0.0.0-20240308012803-a989568e6322/go.mod h1:vsEkO6ZvbbBaO+SWDYah7nqWcaCucL5/5mdQik9DlBk=
+github.com/Souheab/tview v0.0.0-20240322205400-eafa59e47168 h1:L9UtOOsYUK7CAHpNdXTtOyHHlGTw2YWqZJ5Ob75gvms=
+github.com/Souheab/tview v0.0.0-20240322205400-eafa59e47168/go.mod h1:vsEkO6ZvbbBaO+SWDYah7nqWcaCucL5/5mdQik9DlBk=
 github.com/gabriel-vasile/mimetype v1.4.3 h1:in2uUcidCuFcDKtdcBxlR0rJ1+fsokWf+uqxgUFjbI0=
 github.com/gabriel-vasile/mimetype v1.4.3/go.mod h1:d8uq/6HKRL6CGdk+aubisF/M5GcPfT7nKyLpA0lbSSk=
 github.com/gdamore/encoding v1.0.0 h1:+7OoQ1Bc6eTm5niUzBa0Ctsh6JbMW6Ra+YNuAtDBdko=
@@ -10,6 +10,7 @@ github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69
 github.com/lucasb-eyer/go-colorful v1.2.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
 github.com/mattn/go-runewidth v0.0.15 h1:UNAjwbU9l54TA3KzvqLGxwWjHmMgBUVhBiTjelZgg3U=
 github.com/mattn/go-runewidth v0.0.15/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
+github.com/rivo/tview v0.0.0-20240225120200-5605142ca62e/go.mod h1:02iFIz7K/A9jGCvrizLPvoqr4cEIx7q54RH5Qudkrss=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.3/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=

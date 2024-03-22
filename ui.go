@@ -13,13 +13,13 @@ var PermissionDeniedTextBox *tview.TextView
 var EmptyDirTextBox *tview.TextView
 
 func NewList(items []*FSItem) *tview.List {
-	selectedStyle := tcell.StyleDefault.Foreground(tcell.ColorBlue).Reverse(true)
+	selectedStyle := tcell.StyleDefault.Reverse(true)
 	list := tview.NewList().ShowSecondaryText(false).SetSelectedStyle(selectedStyle).SetHighlightFullLine(true)
 
 	for _, item := range items {
 		list_text := item.Name
 		if item.Metadata.Type == Folder {
-			list_text = fmt.Sprintf(" %c %s", FolderIcon, list_text)
+			list_text = fmt.Sprintf("[blue] %c %s", FolderIcon, list_text)
 		} else {
 			list_text = fmt.Sprintf(" %c %s", GetMimeTypeIcon(item.Metadata.MimeType), list_text)
 		}
@@ -43,7 +43,7 @@ func (ui *UI) SetMainList(l *tview.List) {
 	ui.Grid.AddItem(l, 1, 1, 3, 1, 0, 0, true)
 }
 
-func InitUI() UI {
+func InitUI() *UI {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 
 	PermissionDeniedTextBox = tview.NewTextView().SetLabel("[white:red]Permission Denied")
@@ -77,5 +77,5 @@ func InitUI() UI {
 
 	listCache := make(map[string]*tview.List)
 
-	return UI{listCache, grid, currentPath, footer}
+	return &UI{listCache, grid, currentPath, footer}
 }

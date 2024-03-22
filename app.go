@@ -19,7 +19,7 @@ func runApp() {
 	cwd, _ = filepath.Abs(cwd)
 	BackendPointer = CreateAppBackend()
 	BackendPointer.StartAppBackend(cwd)
-	ui := &BackendPointer.UI
+	ui := BackendPointer.UI
 
 	// Rate limit input
 	limiter := rate.NewLimiter(rate.Limit(20), 5)

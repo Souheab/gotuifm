@@ -5,6 +5,7 @@ import (
 	"log"
 	"path/filepath"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -18,7 +19,7 @@ const (
 type AppBackend struct {
 	ActiveDirList *DirList
 	DirListCache  map[string]*DirList
-	UI            UI
+	UI            *UI
 	DotfilesFlag  bool
 	InputCount    string
 }
@@ -178,4 +179,8 @@ func (b *AppBackend) AddToInputCount(inputKeyRune rune) {
 func (b *AppBackend) ClearInputCount() {
 	b.InputCount = ""
 	b.UI.InputCount.SetText("")
+}
+
+func (b *AppBackend) Draw(s tcell.Screen) {
+	b.UI.Grid.Draw(s)
 }
