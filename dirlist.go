@@ -105,7 +105,6 @@ func NewDirList(path string) (DirList, error) {
 	for _, fsEntry := range fsDirEntry {
 		name := fsEntry.Name()
 		fsItemPath, _ := filepath.Abs(filepath.Join(path, name))
-		mime, _ := mimetype.DetectFile(fsItemPath)
 		fileInfo, _ := fsEntry.Info()
 		lastModified := fileInfo.ModTime()
 		permsString := fileInfo.Mode().String()
@@ -119,10 +118,11 @@ func NewDirList(path string) (DirList, error) {
 
 
 		if fsEntry.IsDir() {
-			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), mime, lastModified, permsString, fileSize, ownerUser.Username, group.Name}
+			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), nil, lastModified, permsString, fileSize, ownerUser.Username, group.Name}
 			folder := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			folders = append(folders, &folder)
 		} else {
+			mime, _ := mimetype.DetectFile(fsItemPath)
 			metadata := FSItemMetadata{File, true, mime, lastModified, permsString, fileSize, ownerUser.Username,group.Name}
 			file := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			files = append(files, &file)
