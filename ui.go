@@ -20,10 +20,12 @@ func NewList(items []*FSItem) *tview.List {
 		list_text := item.Name
 		if item.Metadata.Type == Folder {
 			list_text = fmt.Sprintf("[blue] %c %s", FolderIcon, list_text)
+			selectedStyle = selectedStyle.Foreground(tcell.ColorBlue)
+			list.CustomInsertItem(-1, list_text, &selectedStyle)
 		} else {
 			list_text = fmt.Sprintf(" %c %s", GetMimeTypeIcon(item.Metadata.MimeType), list_text)
+			list.CustomInsertItem(-1, list_text, nil)
 		}
-		list.AddItem(list_text, "", 0, nil)
 	}
 
 	f := BackendPointer.GetListChangedFunc()
