@@ -38,7 +38,7 @@ type UI struct {
 	ListCache   map[string]*tview.List
 	Grid        *tview.Grid
 	CurrentPath *tview.TextView
-	InputCount  *tview.TextView
+	Footer      *tview.TextView
 }
 
 func (ui *UI) SetMainList(l *tview.List) {

@@ -1,8 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"os/user"
 	"path/filepath"
+	"syscall"
+	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/rivo/tview"
@@ -29,6 +33,10 @@ func (dl *DirList) GetItemAtIndex(index int) *FSItem {
 	} else {
 		return fsItems[index]
 	}
+}
+
+func (dl *DirList) GetSelectedItem() *FSItem {
+	return dl.GetItemAtIndex(dl.GetCurrentItem())
 }
 
 func (dl *DirList) SetFilter(f func(fsItem *FSItem) bool) {
@@ -74,9 +82,14 @@ type FSItem struct {
 }
 
 type FSItemMetadata struct {
-	Type     int
-	Readable bool
-	MimeType *mimetype.MIME
+	Type           int
+	Readable       bool
+	MimeType       *mimetype.MIME
+	LastModified   time.Time
+	PermsString    string
+	FileSize       int64
+	UserString     string
+	GroupString    string
 }
 
 func NewDirList(path string) (DirList, error) {
@@ -93,13 +106,24 @@ func NewDirList(path string) (DirList, error) {
 		name := fsEntry.Name()
 		fsItemPath, _ := filepath.Abs(filepath.Join(path, name))
 		mime, _ := mimetype.DetectFile(fsItemPath)
+		fileInfo, _ := fsEntry.Info()
+		lastModified := fileInfo.ModTime()
+		permsString := fileInfo.Mode().String()
+		fileSize := fileInfo.Size()
+		stat := fileInfo.Sys().(*syscall.Stat_t)
+		uid := stat.Uid
+		gid := stat.Gid
+
+		ownerUser, _ := user.LookupId(fmt.Sprintf("%d", uid))
+		group, _ := user.LookupGroupId(fmt.Sprintf("%d", gid))
+
 
 		if fsEntry.IsDir() {
-			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), mime}
+			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), mime, lastModified, permsString, fileSize, ownerUser.Username, group.Name}
 			folder := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			folders = append(folders, &folder)
 		} else {
-			metadata := FSItemMetadata{File, true, mime}
+			metadata := FSItemMetadata{File, true, mime, lastModified, permsString, fileSize, ownerUser.Username,group.Name}
 			file := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			files = append(files, &file)
 		}

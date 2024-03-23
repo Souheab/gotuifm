@@ -74,6 +74,8 @@ func (b *AppBackend) Select(n int, initialIndex int, direction int) {
 			b.MakeActiveDirlist(dl)
 		}
 	}
+
+	b.UpdateFooter()
 }
 
 func (b *AppBackend) SetDotfilesVisibility(visibility bool) {
@@ -173,12 +175,23 @@ func (b *AppBackend) DirListCacheGetOtherwiseAdd(path string) *DirList {
 
 func (b *AppBackend) AddToInputCount(inputKeyRune rune) {
 	b.InputCount = fmt.Sprintf("%s%c", b.InputCount, inputKeyRune)
-	b.UI.InputCount.SetText(b.InputCount)
+	b.UI.Footer.SetText(b.InputCount)
 }
 
 func (b *AppBackend) ClearInputCount() {
 	b.InputCount = ""
-	b.UI.InputCount.SetText("")
+	b.UI.Footer.SetText("")
+}
+
+func (b *AppBackend) UpdateFooter() {
+	fsItem := b.ActiveDirList.GetSelectedItem()
+	timeString := fsItem.Metadata.LastModified.Format("02-01-2006 15:04:05")
+	permsString := fsItem.Metadata.PermsString
+	fileSizeString := GetFileSizeHumanReadableString(fsItem.Metadata.FileSize)
+	userString := fsItem.Metadata.UserString
+	groupString := fsItem.Metadata.GroupString
+	footerString := fmt.Sprintf("%s %s %s %s %s", permsString, userString, groupString, timeString, fileSizeString)
+	b.UI.Footer.SetText(footerString)
 }
 
 func (b *AppBackend) Draw(s tcell.Screen) {
