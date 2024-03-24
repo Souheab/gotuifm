@@ -18,7 +18,7 @@ const (
 	InputChannelSize = 5
 )
 
-type AppBackend struct {
+type Backend struct {
 	Tabs         []Tab
 	ActiveTab    *Tab
 	DirListCache map[string]*DirList
@@ -26,12 +26,12 @@ type AppBackend struct {
 	InputChan    chan *tcell.EventKey
 }
 
-func InitAppBackend(startingPath string) *AppBackend {
+func InitAppBackend(startingPath string) *Backend {
 	dlc := make(map[string]*DirList)
 	tabs := make([]Tab, 0, 0)
 	inputChan := make(chan *tcell.EventKey, InputChannelSize)
 	s, _ := tcell.NewScreen()
-	b := &AppBackend{tabs, nil, dlc, s, inputChan}
+	b := &Backend{tabs, nil, dlc, s, inputChan}
 
 	ui := InitUI()
 	dl := b.DirListCacheAdd(startingPath)
@@ -42,7 +42,7 @@ func InitAppBackend(startingPath string) *AppBackend {
 	return b
 }
 
-func (b *AppBackend) DirListCacheAdd(path string) *DirList {
+func (b *Backend) DirListCacheAdd(path string) *DirList {
 	dlc := b.DirListCache
 	path, err := filepath.Abs(path)
 	if err != nil {
@@ -62,7 +62,7 @@ func (b *AppBackend) DirListCacheAdd(path string) *DirList {
 	return nil
 }
 
-func (b *AppBackend) DirListCacheGetOtherwiseAdd(path string) *DirList {
+func (b *Backend) DirListCacheGetOtherwiseAdd(path string) *DirList {
 	dlc := b.DirListCache
 	dl, ok := dlc[path]
 
@@ -73,7 +73,7 @@ func (b *AppBackend) DirListCacheGetOtherwiseAdd(path string) *DirList {
 	}
 }
 
-func (b *AppBackend) Draw() {
+func (b *Backend) Draw() {
 	s := b.Screen
 	grid := b.ActiveTab.UI.Grid
 

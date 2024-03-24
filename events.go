@@ -6,7 +6,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-func (b *AppBackend) ProcessEventsWorker() {
+func (b *Backend) ProcessEventsWorker() {
 	ch := b.InputChan
 
 	for {
@@ -22,7 +22,7 @@ func (b *AppBackend) ProcessEventsWorker() {
 	}
 }
 
-func (b *AppBackend) HandleKeyEvent() {
+func (b *Backend) HandleKeyEvent() {
 	ch := b.InputChan
 	select {
 	case ev := <-ch:
@@ -65,5 +65,4 @@ func (b *AppBackend) HandleKeyEvent() {
 	default:
 		return
 	}
-
 }

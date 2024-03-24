@@ -13,7 +13,7 @@ type Tab struct {
 	UI             *UI
 	DotfilesFlag   bool
 	InputCount     string
-	BackendPointer *AppBackend
+	BackendPointer *Backend
 }
 
 func (t *Tab) Select(n int, initialIndex int, direction int) {

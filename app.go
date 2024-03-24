@@ -34,7 +34,7 @@ func RunApp() {
 	}
 }
 
-func (b *AppBackend) ExitApp() {
+func (b *Backend) ExitApp() {
 	b.Screen.Fini()
 	os.Exit(0)
 }
