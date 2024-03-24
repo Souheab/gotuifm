@@ -23,7 +23,7 @@ func NewList(items []*FSItem) *tview.List {
 			selectedStyle = selectedStyle.Foreground(tcell.ColorBlue)
 			list.CustomInsertItem(-1, list_text, &selectedStyle)
 		} else {
-			list_text = fmt.Sprintf(" %c %s", GetMimeTypeIcon(item.Metadata.MimeType), list_text)
+			list_text = fmt.Sprintf(" %c %s", GetFileIcon(item.Metadata.FileExtension), list_text)
 			list.CustomInsertItem(-1, list_text, nil)
 		}
 	}

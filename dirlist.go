@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gabriel-vasile/mimetype"
 	"github.com/rivo/tview"
 )
 
@@ -84,7 +83,7 @@ type FSItem struct {
 type FSItemMetadata struct {
 	Type           int
 	Readable       bool
-	MimeType       *mimetype.MIME
+	FileExtension  string       
 	LastModified   time.Time
 	PermsString    string
 	FileSize       int64
@@ -118,12 +117,12 @@ func NewDirList(path string) (DirList, error) {
 
 
 		if fsEntry.IsDir() {
-			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), nil, lastModified, permsString, fileSize, ownerUser.Username, group.Name}
+			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), "", lastModified, permsString, fileSize, ownerUser.Username, group.Name}
 			folder := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			folders = append(folders, &folder)
 		} else {
-			mime, _ := mimetype.DetectFile(fsItemPath)
-			metadata := FSItemMetadata{File, true, mime, lastModified, permsString, fileSize, ownerUser.Username,group.Name}
+			fileExtension := filepath.Ext(fsItemPath)
+			metadata := FSItemMetadata{File, true, fileExtension, lastModified, permsString, fileSize, ownerUser.Username,group.Name}
 			file := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			files = append(files, &file)
 		}
