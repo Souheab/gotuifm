@@ -5,7 +5,6 @@ go 1.22.0
 require (
 	github.com/gdamore/tcell/v2 v2.7.4
 	github.com/rivo/tview v0.0.0-20240307173318-e804876934a1
-	golang.org/x/time v0.5.0
 )
 
 require (

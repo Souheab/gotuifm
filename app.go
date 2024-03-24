@@ -16,10 +16,18 @@ const (
 func RunApp() {
 	cwd, _ := os.Getwd()
 	cwd, _ = filepath.Abs(cwd)
-	b := NewAppBackend()
-	b.StartAppBackend(cwd)
+	b := InitAppBackend(cwd)
 	s := b.Screen
+
+	defer func() {
+		if r := recover(); r != nil {
+			s.Fini()
+			panic(r)
+		}
+	}()
+
 	s.Init()
+
 	go b.ProcessEventWorker()
 
 	for {
@@ -49,41 +57,42 @@ func (b *AppBackend) HandleKeyEvent() {
 	ch := b.InputChan
 	select {
 	case ev := <-ch:
+		t := b.ActiveTab
 		switch ev.Key() {
 		case tcell.KeyCtrlC, tcell.KeyCtrlD:
 			b.ExitApp()
 		case tcell.KeyEsc:
-			b.InputCount = ""
+			t.InputCount = ""
 			return
 		}
 
 		inputKeyRune := ev.Rune()
 		if inputKeyRune >= '0' && inputKeyRune <= '9' {
-			b.AddToInputCount(inputKeyRune)
+			t.AddToInputCount(inputKeyRune)
 			return
 		}
 
 		inputTimes := 1
-		if b.InputCount != "" {
-			inputTimes, _ = strconv.Atoi(b.InputCount)
-			b.ClearInputCount()
+		if t.InputCount != "" {
+			inputTimes, _ = strconv.Atoi(t.InputCount)
+			t.ClearInputCount()
 		}
 
 		switch inputKeyRune {
 		case 'h', 'H':
-			b.Select(1, 0, DirectionLeft)
+			t.Select(1, 0, DirectionLeft)
 		case 'j', 'J':
-			b.Select(inputTimes, 0, DirectionDown)
+			t.Select(inputTimes, 0, DirectionDown)
 		case 'k', 'K':
-			b.Select(inputTimes, 0, DirectionUp)
+			t.Select(inputTimes, 0, DirectionUp)
 		case 'l', 'L':
-			b.Select(1, 0, DirectionRight)
+			t.Select(1, 0, DirectionRight)
 		case '.':
-			b.ToggleDotfilesVisibility()
+			t.ToggleDotfilesVisibility()
 		case 'q', 'Q':
 			b.ExitApp()
 		}
-		b.RunListChangedFunc()
+		t.RunListChangedFunc()
 	default:
 		return
 	}
