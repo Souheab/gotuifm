@@ -1,12 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
+)
+
+const (
+	TickTime = time.Millisecond * 10
 )
 
 func RunApp() {
@@ -16,26 +20,35 @@ func RunApp() {
 	b.StartAppBackend(cwd)
 	s := b.Screen
 	s.Init()
+	go b.ProcessEventWorker()
 
-	// App Loop
 	for {
-		ev := s.PollEvent()
-		b.HandleEvent(ev)
 		b.Draw()
+		b.HandleKeyEvent()
+		time.Sleep(TickTime)
 	}
 }
 
-func (b *AppBackend) HandleEvent(ev tcell.Event) {
-	switch ev := ev.(type) {
-	case *tcell.EventKey:
-		b.HandleKeyEvent(ev)
-	case *tcell.EventResize:
-		w, h := ev.Size()
-		fmt.Printf("Resized to %dx%d", w, h)
+func (b *AppBackend) ProcessEventWorker() {
+	ch := b.InputChan
+
+	for {
+		ev := b.Screen.PollEvent()
+
+		switch ev := ev.(type) {
+		case *tcell.EventKey:
+			select {
+			case ch <- ev:
+			default:
+			}
+		}
 	}
 }
 
-func (b *AppBackend) HandleKeyEvent(ev *tcell.EventKey) {
+func (b *AppBackend) HandleKeyEvent() {
+	ch := b.InputChan
+	select {
+	case ev := <-ch:
 		switch ev.Key() {
 		case tcell.KeyCtrlC, tcell.KeyCtrlD:
 			b.ExitApp()
@@ -71,6 +84,10 @@ func (b *AppBackend) HandleKeyEvent(ev *tcell.EventKey) {
 			b.ExitApp()
 		}
 		b.RunListChangedFunc()
+	default:
+		return
+	}
+
 }
 
 func (b *AppBackend) ExitApp() {

@@ -16,6 +16,10 @@ const (
 	DirectionDown
 )
 
+const (
+	InputChannelSize = 5
+)
+
 type AppBackend struct {
 	ActiveDirList *DirList
 	DirListCache  map[string]*DirList
@@ -23,13 +27,15 @@ type AppBackend struct {
 	DotfilesFlag  bool
 	InputCount    string
 	Screen        tcell.Screen
+	InputChan     chan *tcell.EventKey
 }
 
 func NewAppBackend() *AppBackend {
 	dlc := make(map[string]*DirList)
+	inputChan := make(chan *tcell.EventKey, InputChannelSize)
 	ui := InitUI()
 	s, _ := tcell.NewScreen()
-	b := AppBackend{nil, dlc, ui, false, "", s}
+	b := AppBackend{nil, dlc, ui, false, "", s, inputChan}
 	return &b
 }
 
