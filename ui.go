@@ -28,9 +28,6 @@ func NewList(items []*FSItem) *tview.List {
 		}
 	}
 
-	f := BackendPointer.GetListChangedFunc()
-	list.SetChangedFunc(f)
-
 	return list
 }
 

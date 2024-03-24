@@ -10,14 +10,11 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// Single Source of Truth for this program
-// Accesible Globally
-var BackendPointer *AppBackend
 
 func runApp() {
 	cwd, _ := os.Getwd()
 	cwd, _ = filepath.Abs(cwd)
-	BackendPointer = CreateAppBackend()
+	BackendPointer := CreateAppBackend()
 	BackendPointer.StartAppBackend(cwd)
 	ui := BackendPointer.UI
 
@@ -63,6 +60,7 @@ func runApp() {
 		case 'q', 'Q':
 			app.Stop()
 		}
+		BackendPointer.RunListChangedFunc()
 		return nil
 	}
 
