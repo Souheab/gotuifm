@@ -1,70 +1,79 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
-	"golang.org/x/time/rate"
 )
 
-
-func runApp() {
+func RunApp() {
 	cwd, _ := os.Getwd()
 	cwd, _ = filepath.Abs(cwd)
-	BackendPointer := CreateAppBackend()
-	BackendPointer.StartAppBackend(cwd)
-	ui := BackendPointer.UI
+	b := NewAppBackend()
+	b.StartAppBackend(cwd)
+	s := b.Screen
+	s.Init()
 
-	// Rate limit input
-	limiter := rate.NewLimiter(rate.Limit(20), 5)
-	app := tview.NewApplication()
-	inputHandler := func(event *tcell.EventKey) *tcell.EventKey {
-		if !limiter.Allow() {
-			return nil
-		}
+	// App Loop
+	for {
+		ev := s.PollEvent()
+		b.HandleEvent(ev)
+		b.Draw()
+	}
+}
 
-		switch event.Key() {
+func (b *AppBackend) HandleEvent(ev tcell.Event) {
+	switch ev := ev.(type) {
+	case *tcell.EventKey:
+		b.HandleKeyEvent(ev)
+	case *tcell.EventResize:
+		w, h := ev.Size()
+		fmt.Printf("Resized to %dx%d", w, h)
+	}
+}
+
+func (b *AppBackend) HandleKeyEvent(ev *tcell.EventKey) {
+		switch ev.Key() {
 		case tcell.KeyCtrlC, tcell.KeyCtrlD:
-			app.Stop()
+			b.ExitApp()
 		case tcell.KeyEsc:
-			BackendPointer.InputCount = ""
-			return nil
+			b.InputCount = ""
+			return
 		}
 
-		inputKeyRune := event.Rune()
+		inputKeyRune := ev.Rune()
 		if inputKeyRune >= '0' && inputKeyRune <= '9' {
-			BackendPointer.AddToInputCount(inputKeyRune)
-			return nil
+			b.AddToInputCount(inputKeyRune)
+			return
 		}
 
 		inputTimes := 1
-		if BackendPointer.InputCount != "" {
-			inputTimes, _ = strconv.Atoi(BackendPointer.InputCount)
-			BackendPointer.ClearInputCount()
+		if b.InputCount != "" {
+			inputTimes, _ = strconv.Atoi(b.InputCount)
+			b.ClearInputCount()
 		}
 
 		switch inputKeyRune {
 		case 'h', 'H':
-			BackendPointer.Select(1, 0, DirectionLeft)
+			b.Select(1, 0, DirectionLeft)
 		case 'j', 'J':
-			BackendPointer.Select(inputTimes, 0, DirectionDown)
+			b.Select(inputTimes, 0, DirectionDown)
 		case 'k', 'K':
-			BackendPointer.Select(inputTimes, 0, DirectionUp)
+			b.Select(inputTimes, 0, DirectionUp)
 		case 'l', 'L':
-			BackendPointer.Select(1, 0, DirectionRight)
+			b.Select(1, 0, DirectionRight)
 		case '.':
-			BackendPointer.ToggleDotfilesVisibility()
+			b.ToggleDotfilesVisibility()
 		case 'q', 'Q':
-			app.Stop()
+			b.ExitApp()
 		}
-		BackendPointer.RunListChangedFunc()
-		return nil
-	}
+		b.RunListChangedFunc()
+}
 
-	if err := app.SetInputCapture(inputHandler).SetRoot(ui.Grid, true).SetFocus(ui.Grid).Run(); err != nil {
-		panic(err)
-	}
+func (b *AppBackend) ExitApp() {
+	b.Screen.Fini()
+	os.Exit(0)
 }

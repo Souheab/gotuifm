@@ -22,12 +22,14 @@ type AppBackend struct {
 	UI            *UI
 	DotfilesFlag  bool
 	InputCount    string
+	Screen        tcell.Screen
 }
 
-func CreateAppBackend() *AppBackend {
+func NewAppBackend() *AppBackend {
 	dlc := make(map[string]*DirList)
 	ui := InitUI()
-	b := AppBackend{nil, dlc, ui, false, ""}
+	s, _ := tcell.NewScreen()
+	b := AppBackend{nil, dlc, ui, false, "", s}
 	return &b
 }
 
@@ -194,6 +196,13 @@ func (b *AppBackend) UpdateFooter() {
 	b.UI.Footer.SetText(footerString)
 }
 
-func (b *AppBackend) Draw(s tcell.Screen) {
-	b.UI.Grid.Draw(s)
+func (b *AppBackend) Draw() {
+	s := b.Screen
+	grid := b.UI.Grid
+
+	w, h := s.Size()
+	s.Clear()
+	grid.SetRect(0, 0, w, h)
+	grid.Draw(b.Screen)
+	s.Show()
 }
