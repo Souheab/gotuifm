@@ -42,20 +42,6 @@ func InitAppBackend(startingPath string) *AppBackend {
 	return b
 }
 
-// func NewAppBackend() *AppBackend {
-// 	dlc := make(map[string]*DirList)
-// 	inputChan := make(chan *tcell.EventKey, InputChannelSize)
-// 	ui := InitUI()
-// 	s, _ := tcell.NewScreen()
-// 	b := AppBackend{nil, dlc, ui, false, "", s, inputChan}
-// 	return &b
-// }
-
-// func (b *AppBackend) StartAppBackend(startingPath string) {
-// 	dl := b.DirListCacheAdd(startingPath)
-// 	b.MakeActiveDirlist(dl)
-// }
-
 func (b *AppBackend) DirListCacheAdd(path string) *DirList {
 	dlc := b.DirListCache
 	path, err := filepath.Abs(path)
