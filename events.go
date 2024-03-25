@@ -62,6 +62,7 @@ func (b *Backend) HandleKeyEvent() {
 			b.ExitApp()
 		}
 		t.RunListChangedFunc()
+		t.ActiveDirList.AdjustOffset()
 	default:
 		return
 	}

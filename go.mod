@@ -16,5 +16,3 @@ require (
 	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
-
-replace github.com/rivo/tview => github.com/Souheab/tview v0.0.0-20240323015806-cdd454febae0

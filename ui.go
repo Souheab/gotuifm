@@ -12,25 +12,6 @@ import (
 var PermissionDeniedTextBox *tview.TextView
 var EmptyDirTextBox *tview.TextView
 
-func NewList(items []*FSItem) *tview.List {
-	selectedStyle := tcell.StyleDefault.Reverse(true)
-	list := tview.NewList().ShowSecondaryText(false).SetSelectedStyle(selectedStyle).SetHighlightFullLine(true)
-
-	for _, item := range items {
-		list_text := item.Name
-		if item.Metadata.Type == Folder {
-			list_text = fmt.Sprintf("[blue] %c %s", FolderIcon, list_text)
-			selectedStyle = selectedStyle.Foreground(tcell.ColorBlue)
-			list.CustomInsertItem(-1, list_text, &selectedStyle)
-		} else {
-			list_text = fmt.Sprintf(" %c %s", GetFileIcon(item.Metadata.FileExtension), list_text)
-			list.CustomInsertItem(-1, list_text, nil)
-		}
-	}
-
-	return list
-}
-
 type UI struct {
 	ListCache   map[string]*tview.List
 	Grid        *tview.Grid

@@ -24,6 +24,7 @@ type DirList struct {
 	Path              string
 	DotfilesFlag      bool
 	selectedItemIndex int
+	itemOffset        int
 }
 
 func (dl *DirList) GetItemAtIndex(index int) *FSItem {
@@ -129,10 +130,10 @@ func NewDirList(path string) (*DirList, error) {
 
 	fsItems := append(folders, files...)
 
-	return &DirList{tview.NewBox(),fsItems, fsItems, path, true, 0}, nil
+	return &DirList{tview.NewBox(), fsItems, fsItems, path, true, 0, 0}, nil
 }
 
-func (dl *DirList) Draw(screen tcell.Screen){
+func (dl *DirList) Draw(screen tcell.Screen) {
 	textStyle := tcell.StyleDefault
 	selectedStyle := textStyle.Reverse(true)
 
@@ -145,17 +146,40 @@ func (dl *DirList) Draw(screen tcell.Screen){
 		bottomLimit = totalHeight
 	}
 
+	if (dl.selectedItemIndex + dl.itemOffset) > bottomLimit {
+	}
+
 	for i, item := range dl.FilteredItems {
+		if i < dl.itemOffset {
+			continue
+		}
+
 		itemString := item.Name
-		if y+i >= bottomLimit {
+		if y >= bottomLimit {
 			break
 		}
 
 		printStyle := textStyle
-		if (i == dl.selectedItemIndex) {
+		if i == dl.selectedItemIndex {
 			printStyle = selectedStyle
 		}
 
-		PrintWithStyle(screen, itemString, x, y + i, width, printStyle)
+		PrintWithStyle(screen, itemString, x, y, width, printStyle)
+
+		y++
+	}
+}
+
+func (dl *DirList) AdjustOffset() {
+	_, _, _, height := dl.GetInnerRect()
+	if height == 0 {
+		return
+	}
+	if dl.selectedItemIndex < dl.itemOffset {
+		dl.itemOffset = dl.selectedItemIndex
+	} else {
+		if dl.selectedItemIndex-dl.itemOffset >= height {
+			dl.itemOffset = dl.selectedItemIndex + 1 - height
+		}
 	}
 }
