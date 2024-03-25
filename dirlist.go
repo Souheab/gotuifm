@@ -76,9 +76,9 @@ func (dl *DirList) SetDotfilesVisibility(visible bool) {
 }
 
 type FSItem struct {
-	Path     string
-	Name     string
-	Metadata FSItemMetadata
+	Path                 string
+	Name                 string
+	Metadata             FSItemMetadata
 }
 
 type FSItemMetadata struct {
@@ -90,6 +90,7 @@ type FSItemMetadata struct {
 	FileSize      int64
 	UserString    string
 	GroupString   string
+	Icon          rune
 }
 
 func NewDirList(path string) (*DirList, error) {
@@ -117,13 +118,14 @@ func NewDirList(path string) (*DirList, error) {
 		group, _ := user.LookupGroupId(fmt.Sprintf("%d", gid))
 
 		if fsEntry.IsDir() {
-			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), "", lastModified, permsString, fileSize, ownerUser.Username, group.Name}
-			folder := FSItem{fsItemPath, fsEntry.Name(), metadata}
+			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), "", lastModified, permsString, fileSize, ownerUser.Username, group.Name, FolderIcon}
+			folder := FSItem{fsItemPath, name,  metadata}
 			folders = append(folders, &folder)
 		} else {
 			fileExtension := filepath.Ext(fsItemPath)
-			metadata := FSItemMetadata{File, true, fileExtension, lastModified, permsString, fileSize, ownerUser.Username, group.Name}
-			file := FSItem{fsItemPath, fsEntry.Name(), metadata}
+			icon := GetFileIcon(fileExtension)
+			metadata := FSItemMetadata{File, true, fileExtension, lastModified, permsString, fileSize, ownerUser.Username, group.Name, icon}
+			file := FSItem{fsItemPath, name, metadata}
 			files = append(files, &file)
 		}
 	}
@@ -145,6 +147,7 @@ func (dl *DirList) Draw(screen tcell.Screen) {
 	if bottomLimit > totalHeight {
 		bottomLimit = totalHeight
 	}
+	// ClearArea(screen, x, y, width, bottomLimit)
 
 	if (dl.selectedItemIndex + dl.itemOffset) > bottomLimit {
 	}
@@ -154,7 +157,6 @@ func (dl *DirList) Draw(screen tcell.Screen) {
 			continue
 		}
 
-		itemString := item.Name
 		if y >= bottomLimit {
 			break
 		}
@@ -164,7 +166,11 @@ func (dl *DirList) Draw(screen tcell.Screen) {
 			printStyle = selectedStyle
 		}
 
-		PrintWithStyle(screen, itemString, x, y, width, printStyle)
+		if item.Metadata.Type == Folder {
+			printStyle = printStyle.Foreground(tcell.ColorBlue)
+		}
+
+		PrintWithStyle(screen, item.Metadata.Icon,  item.Name, x, y, width, printStyle)
 
 		y++
 	}
@@ -181,5 +187,31 @@ func (dl *DirList) AdjustOffset() {
 		if dl.selectedItemIndex-dl.itemOffset >= height {
 			dl.itemOffset = dl.selectedItemIndex + 1 - height
 		}
+	}
+}
+
+
+// This function is hackily made to support wide characters (nerd font)
+// Try to figure out a way to make this deal with wide runes:
+// Tcell docs have some mention of them so look for that
+func PrintWithStyle(screen tcell.Screen, icon rune, text string, x, y, maxWidth int, style tcell.Style) {
+	screen.SetContent(x, y, ' ', nil, style)
+	screen.SetContent(x+1, y, icon, nil, style)
+	screen.SetContent(x+2, y, ' ', nil, style)
+
+	x = x+3
+	var i int
+	var ru rune
+	for i, ru = range text {
+		if i >= maxWidth - 2 {
+			break
+		}
+
+		screen.SetContent(x+i, y, ru, nil, style)
+	}
+
+	for i <= maxWidth - 4{
+		screen.SetContent(x+1+i, y, ' ', nil, style)
+		i++
 	}
 }

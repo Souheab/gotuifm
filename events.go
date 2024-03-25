@@ -18,6 +18,8 @@ func (b *Backend) ProcessEventsWorker() {
 			case ch <- ev:
 			default:
 			}
+		case *tcell.EventResize:
+			b.Draw()
 		}
 	}
 }
@@ -63,7 +65,5 @@ func (b *Backend) HandleKeyEvent() {
 		}
 		t.RunListChangedFunc()
 		t.ActiveDirList.AdjustOffset()
-	default:
-		return
 	}
 }

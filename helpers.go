@@ -32,11 +32,11 @@ func GetFileSizeHumanReadableString(fileSize int64) string {
 	return fmt.Sprintf("%.1f %s", value, units[i])
 }
 
-func PrintWithStyle(screen tcell.Screen, text string, x, y, maxWidth int, style tcell.Style) {
-	for i, ru := range text {
-		if i >= maxWidth {
-			break
+
+func ClearArea (s tcell.Screen, x ,y, width, height int) {
+	for i := range height {
+		for j := range width {
+			s.SetContent(x+j, y+i, ' ', nil, tcell.StyleDefault)
 		}
-		screen.SetContent(x+i, y, ru, nil, style)
 	}
 }
