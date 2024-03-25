@@ -36,7 +36,7 @@ func (t *Tab) Select(n int, initialIndex int, direction int) {
 		dl := t.BackendPointer.DirListCacheGetOtherwiseAdd(path)
 		t.MakeActiveDirlist(dl)
 	case DirectionUp, DirectionDown:
-		currentIndex := acDl.GetCurrentItem()
+		currentIndex := acDl.selectedItemIndex
 		targetIndex := 0
 		if direction == DirectionUp {
 			targetIndex = currentIndex - n
@@ -45,10 +45,13 @@ func (t *Tab) Select(n int, initialIndex int, direction int) {
 			}
 		} else {
 			targetIndex = currentIndex + n
+			if targetIndex >= len(acDl.FilteredItems) {
+				targetIndex = len(acDl.FilteredItems) - 1
+			}
 		}
-		acDl.SetCurrentItem(targetIndex)
+		acDl.selectedItemIndex = targetIndex
 	case DirectionRight:
-		fsItem := acDl.GetItemAtIndex(acDl.GetCurrentItem())
+		fsItem := acDl.GetItemAtIndex(acDl.selectedItemIndex)
 		if fsItem.Metadata.Type == Folder && fsItem.Metadata.Readable {
 			dl := t.BackendPointer.DirListCacheGetOtherwiseAdd(fsItem.Path)
 			t.MakeActiveDirlist(dl)
@@ -82,7 +85,7 @@ func (t *Tab) ToggleDotfilesVisibility() {
 
 func (t *Tab) RunListChangedFunc() {
 	activeDl := t.ActiveDirList
-	fsItem := activeDl.GetItemAtIndex(t.ActiveDirList.GetCurrentItem())
+	fsItem := activeDl.GetItemAtIndex(t.ActiveDirList.selectedItemIndex)
 	if fsItem == nil {
 		log.Fatalf("error in listChangedFunc")
 	} else {

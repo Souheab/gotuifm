@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/gdamore/tcell/v2"
 )
 
 func PathExists(s string) bool {
@@ -28,4 +30,13 @@ func GetFileSizeHumanReadableString(fileSize int64) string {
 		i++
 	}
 	return fmt.Sprintf("%.1f %s", value, units[i])
+}
+
+func PrintWithStyle(screen tcell.Screen, text string, x, y, maxWidth int, style tcell.Style) {
+	for i, ru := range text {
+		if i >= maxWidth {
+			break
+		}
+		screen.SetContent(x+i, y, ru, nil, style)
+	}
 }

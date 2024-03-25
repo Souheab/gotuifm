@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -17,11 +18,12 @@ const (
 )
 
 type DirList struct {
-	*tview.List
-	FSItems       []*FSItem
-	FilteredItems []*FSItem
-	Path          string
-	DotfilesFlag  bool
+	*tview.Box
+	FSItems           []*FSItem
+	FilteredItems     []*FSItem
+	Path              string
+	DotfilesFlag      bool
+	selectedItemIndex int
 }
 
 func (dl *DirList) GetItemAtIndex(index int) *FSItem {
@@ -35,7 +37,7 @@ func (dl *DirList) GetItemAtIndex(index int) *FSItem {
 }
 
 func (dl *DirList) GetSelectedItem() *FSItem {
-	return dl.GetItemAtIndex(dl.GetCurrentItem())
+	return dl.GetItemAtIndex(dl.selectedItemIndex)
 }
 
 func (dl *DirList) SetFilter(f func(fsItem *FSItem) bool) {
@@ -48,12 +50,10 @@ func (dl *DirList) SetFilter(f func(fsItem *FSItem) bool) {
 	}
 
 	dl.FilteredItems = filteredItems
-	dl.List = NewList(filteredItems)
 }
 
 func (dl *DirList) RemoveFilter() {
 	dl.FilteredItems = dl.FSItems
-	dl.List = NewList(dl.FSItems)
 }
 
 func (dl *DirList) SetDotfilesVisibility(visible bool) {
@@ -81,21 +81,21 @@ type FSItem struct {
 }
 
 type FSItemMetadata struct {
-	Type           int
-	Readable       bool
-	FileExtension  string       
-	LastModified   time.Time
-	PermsString    string
-	FileSize       int64
-	UserString     string
-	GroupString    string
+	Type          int
+	Readable      bool
+	FileExtension string
+	LastModified  time.Time
+	PermsString   string
+	FileSize      int64
+	UserString    string
+	GroupString   string
 }
 
-func NewDirList(path string) (DirList, error) {
+func NewDirList(path string) (*DirList, error) {
 
 	fsDirEntry, err := os.ReadDir(path)
 	if err != nil {
-		return DirList{nil, nil, nil, path, true}, err
+		return nil, err
 	}
 
 	files := make([]*FSItem, 0, 0)
@@ -115,14 +115,13 @@ func NewDirList(path string) (DirList, error) {
 		ownerUser, _ := user.LookupId(fmt.Sprintf("%d", uid))
 		group, _ := user.LookupGroupId(fmt.Sprintf("%d", gid))
 
-
 		if fsEntry.IsDir() {
 			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), "", lastModified, permsString, fileSize, ownerUser.Username, group.Name}
 			folder := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			folders = append(folders, &folder)
 		} else {
 			fileExtension := filepath.Ext(fsItemPath)
-			metadata := FSItemMetadata{File, true, fileExtension, lastModified, permsString, fileSize, ownerUser.Username,group.Name}
+			metadata := FSItemMetadata{File, true, fileExtension, lastModified, permsString, fileSize, ownerUser.Username, group.Name}
 			file := FSItem{fsItemPath, fsEntry.Name(), metadata}
 			files = append(files, &file)
 		}
@@ -130,7 +129,33 @@ func NewDirList(path string) (DirList, error) {
 
 	fsItems := append(folders, files...)
 
-	list := NewList(fsItems)
+	return &DirList{tview.NewBox(),fsItems, fsItems, path, true, 0}, nil
+}
 
-	return DirList{list, fsItems, fsItems, path, true}, nil
+func (dl *DirList) Draw(screen tcell.Screen){
+	textStyle := tcell.StyleDefault
+	selectedStyle := textStyle.Reverse(true)
+
+	dl.Box.DrawForSubclass(screen, dl)
+
+	x, y, width, height := dl.GetInnerRect()
+	bottomLimit := y + height
+	_, totalHeight := screen.Size()
+	if bottomLimit > totalHeight {
+		bottomLimit = totalHeight
+	}
+
+	for i, item := range dl.FilteredItems {
+		itemString := item.Name
+		if y+i >= bottomLimit {
+			break
+		}
+
+		printStyle := textStyle
+		if (i == dl.selectedItemIndex) {
+			printStyle = selectedStyle
+		}
+
+		PrintWithStyle(screen, itemString, x, y + i, width, printStyle)
+	}
 }

@@ -53,10 +53,9 @@ func (b *Backend) DirListCacheAdd(path string) *DirList {
 		if err != nil {
 			log.Fatalf("%+v", err)
 		}
-		dlP := &dl
-		dlc[path] = dlP
+		dlc[path] = dl
 
-		return dlP
+		return dl
 	}
 
 	return nil
