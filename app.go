@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -10,10 +9,8 @@ const (
 	TickTime = time.Millisecond * 10
 )
 
-func RunApp() {
-	cwd, _ := os.Getwd()
-	cwd, _ = filepath.Abs(cwd)
-	b := InitAppBackend(cwd)
+func RunApp(options AppOptions) {
+	b := InitAppBackend(*options.WorkingDirectory)
 	s := b.Screen
 
 	defer func() {
