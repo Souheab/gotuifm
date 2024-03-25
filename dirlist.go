@@ -43,18 +43,34 @@ func (dl *DirList) GetSelectedItem() *FSItem {
 
 func (dl *DirList) SetFilter(f func(fsItem *FSItem) bool) {
 	filteredItems := make([]*FSItem, 0, 0)
+	selectedItem := dl.FilteredItems[dl.selectedItemIndex]
+	selectedItemFiltered := false
 
 	for _, fsItem := range dl.FSItems {
 		if f(fsItem) {
 			filteredItems = append(filteredItems, fsItem)
+			if fsItem == selectedItem {
+				dl.selectedItemIndex = len(filteredItems) - 1
+				selectedItemFiltered = true
+			}
 		}
 	}
 
+	filteredItemsLength := len(filteredItems)
+	if !selectedItemFiltered && dl.selectedItemIndex >= filteredItemsLength {
+		dl.selectedItemIndex = filteredItemsLength - 1
+	}
+
 	dl.FilteredItems = filteredItems
+	// TODO: deal with this offset thing
+	dl.AdjustOffset()
 }
 
 func (dl *DirList) RemoveFilter() {
-	dl.FilteredItems = dl.FSItems
+	// dl.FilteredItems = dl.FSItems
+	dl.SetFilter(func(_ *FSItem) bool {
+		return true
+	})
 }
 
 func (dl *DirList) SetDotfilesVisibility(visible bool) {
@@ -76,9 +92,9 @@ func (dl *DirList) SetDotfilesVisibility(visible bool) {
 }
 
 type FSItem struct {
-	Path                 string
-	Name                 string
-	Metadata             FSItemMetadata
+	Path     string
+	Name     string
+	Metadata FSItemMetadata
 }
 
 type FSItemMetadata struct {
@@ -119,7 +135,7 @@ func NewDirList(path string) (*DirList, error) {
 
 		if fsEntry.IsDir() {
 			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), "", lastModified, permsString, fileSize, ownerUser.Username, group.Name, FolderIcon}
-			folder := FSItem{fsItemPath, name,  metadata}
+			folder := FSItem{fsItemPath, name, metadata}
 			folders = append(folders, &folder)
 		} else {
 			fileExtension := filepath.Ext(fsItemPath)
@@ -170,15 +186,20 @@ func (dl *DirList) Draw(screen tcell.Screen) {
 			printStyle = printStyle.Foreground(tcell.ColorBlue)
 		}
 
-		PrintWithStyle(screen, item.Metadata.Icon,  item.Name, x, y, width, printStyle)
+		PrintWithStyle(screen, item.Metadata.Icon, item.Name, x, y, width, printStyle)
 
 		y++
 	}
 }
 
+// TODO: Get a better algorithm to adjust offset
 func (dl *DirList) AdjustOffset() {
 	_, _, _, height := dl.GetInnerRect()
 	if height == 0 {
+		return
+	}
+	if dl.selectedItemIndex < height {
+		dl.itemOffset = 0
 		return
 	}
 	if dl.selectedItemIndex < dl.itemOffset {
@@ -190,7 +211,6 @@ func (dl *DirList) AdjustOffset() {
 	}
 }
 
-
 // This function is hackily made to support wide characters (nerd font)
 // Try to figure out a way to make this deal with wide runes:
 // Tcell docs have some mention of them so look for that
@@ -199,18 +219,18 @@ func PrintWithStyle(screen tcell.Screen, icon rune, text string, x, y, maxWidth 
 	screen.SetContent(x+1, y, icon, nil, style)
 	screen.SetContent(x+2, y, ' ', nil, style)
 
-	x = x+3
+	x = x + 3
 	var i int
 	var ru rune
 	for i, ru = range text {
-		if i >= maxWidth - 2 {
+		if i >= maxWidth-2 {
 			break
 		}
 
 		screen.SetContent(x+i, y, ru, nil, style)
 	}
 
-	for i <= maxWidth - 4{
+	for i <= maxWidth-4 {
 		screen.SetContent(x+1+i, y, ' ', nil, style)
 		i++
 	}

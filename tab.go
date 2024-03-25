@@ -54,7 +54,9 @@ func (t *Tab) Select(n int, initialIndex int, direction int) {
 		fsItem := acDl.GetItemAtIndex(acDl.selectedItemIndex)
 		if fsItem.Metadata.Type == Folder && fsItem.Metadata.Readable {
 			dl := t.BackendPointer.DirListCacheGetOtherwiseAdd(fsItem.Path)
-			t.MakeActiveDirlist(dl)
+			if len(dl.FilteredItems) != 0 {
+				t.MakeActiveDirlist(dl)
+			}
 		}
 	}
 
