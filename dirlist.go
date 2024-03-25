@@ -43,9 +43,13 @@ func (dl *DirList) GetSelectedItem() *FSItem {
 
 func (dl *DirList) SetFilter(f func(fsItem *FSItem) bool) {
 	filteredItems := make([]*FSItem, 0, 0)
-	selectedItem := dl.FilteredItems[dl.selectedItemIndex]
-	selectedItemFiltered := false
+	var selectedItem *FSItem = nil
 
+	if dl.selectedItemIndex >= 0 && dl.selectedItemIndex < len(dl.FilteredItems) {
+		selectedItem = dl.FilteredItems[dl.selectedItemIndex]
+	}
+
+	selectedItemFiltered := false
 	for _, fsItem := range dl.FSItems {
 		if f(fsItem) {
 			filteredItems = append(filteredItems, fsItem)
