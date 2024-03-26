@@ -6,7 +6,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-func (b *Backend) ProcessEventsWorker() {
+func (b *Backend) ProcessScreenEventsWorker() {
 	ch := b.InputChan
 
 	for {
@@ -21,6 +21,16 @@ func (b *Backend) ProcessEventsWorker() {
 		case *tcell.EventResize:
 			b.Draw()
 		}
+	}
+}
+
+func (b *Backend) ProcessDirListEventsWorker() {
+	ch := b.DirListEventsChan
+
+	for {
+		<- ch
+		b.ActiveTab.RunListChangedFunc()
+		b.Draw()
 	}
 }
 

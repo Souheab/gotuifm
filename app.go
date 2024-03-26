@@ -23,7 +23,8 @@ func RunApp(options AppOptions) {
 
 	s.Init()
 
-	go b.ProcessEventsWorker()
+	go b.ProcessScreenEventsWorker()
+	go b.ProcessDirListEventsWorker()
 
 	for {
 		b.Draw()

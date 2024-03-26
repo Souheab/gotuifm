@@ -33,8 +33,10 @@ func (t *Tab) Select(n int, initialIndex int, direction int) {
 		for range n {
 			path = filepath.Dir(path)
 		}
-		dl := t.BackendPointer.DirListCacheGetOtherwiseAdd(path)
-		t.MakeActiveDirlist(dl)
+		dl, ok := t.BackendPointer.DirListCache[path]
+		if ok {
+			t.MakeActiveDirlist(dl)
+		}
 	case DirectionUp, DirectionDown:
 		currentIndex := acDl.selectedItemIndex
 		targetIndex := 0
@@ -53,8 +55,8 @@ func (t *Tab) Select(n int, initialIndex int, direction int) {
 	case DirectionRight:
 		fsItem := acDl.GetItemAtIndex(acDl.selectedItemIndex)
 		if fsItem.Metadata.Type == Folder && fsItem.Metadata.Readable {
-			dl := t.BackendPointer.DirListCacheGetOtherwiseAdd(fsItem.Path)
-			if len(dl.FilteredItems) != 0 {
+			dl , ok := t.BackendPointer.DirListCache[fsItem.Path]
+			if len(dl.FilteredItems) != 0 && ok{
 				t.MakeActiveDirlist(dl)
 			}
 		}
@@ -97,12 +99,18 @@ func (t *Tab) RunListChangedFunc() {
 	} else {
 		if fsItem.Metadata.Type == Folder {
 			if fsItem.Metadata.Readable {
-				dl := t.BackendPointer.DirListCacheGetOtherwiseAdd(fsItem.Path)
-				dl.SetDotfilesVisibility(t.DotfilesFlag)
-				if len(dl.FilteredItems) == 0 {
-					r = EmptyDirTextBox
+				dl, ok := t.BackendPointer.DirListCache[fsItem.Path]
+				
+				if ok {
+					dl.SetDotfilesVisibility(t.DotfilesFlag)
+					if len(dl.FilteredItems) == 0 {
+						r = EmptyDirTextBox
+					} else {
+						r = dl
+					}
 				} else {
-					r = dl
+					go t.BackendPointer.DirListCacheAdd(fsItem.Path)
+					r = LoadingTextBox
 				}
 			} else {
 				r = PermissionDeniedTextBox
@@ -116,9 +124,14 @@ func (t *Tab) RunListChangedFunc() {
 			l = EmptyBox
 		} else {
 			parentPath := filepath.Dir(activeDl.Path)
-			dl := t.BackendPointer.DirListCacheGetOtherwiseAdd(parentPath)
-			dl.SetDotfilesVisibility(t.DotfilesFlag)
-			l = dl
+			dl, ok := t.BackendPointer.DirListCache[parentPath]
+			if ok {
+				dl.SetDotfilesVisibility(t.DotfilesFlag)
+				l = dl
+			} else {
+				go t.BackendPointer.DirListCacheAdd(parentPath)
+				l = LoadingTextBox
+			}
 		}
 	}
 
