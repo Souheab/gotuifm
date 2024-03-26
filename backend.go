@@ -38,7 +38,7 @@ func InitAppBackend(startingPath string) *Backend {
 	ui := InitUI()
 	b.DirListCacheAddNonConcurrent(startingPath)
 	dl := b.DirListCache[startingPath]
-	t := &Tab{nil, ui, false, "", b}
+	t := &Tab{nil, ui, false, "", b, DefaultSort}
 	t.MakeActiveDirlist(dl)
 	b.ActiveTab = t
 
@@ -86,17 +86,6 @@ func (b *Backend) DirListCacheAddNonConcurrent(path string) {
 		dlc[path] = dl
 	}
 }
-
-// func (b *Backend) DirListCacheGetOtherwiseAdd(path string) *DirList {
-// 	dlc := b.DirListCache
-// 	dl, ok := dlc[path]
-
-// 	if ok {
-// 		return dl
-// 	} else {
-// 		return b.DirListCacheAdd(path)
-// 	}
-// }
 
 func (b *Backend) Draw() {
 	s := b.Screen

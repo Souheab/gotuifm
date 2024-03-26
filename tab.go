@@ -9,11 +9,12 @@ import (
 )
 
 type Tab struct {
-	ActiveDirList  *DirList
-	UI             *UI
-	DotfilesFlag   bool
-	InputCount     string
-	BackendPointer *Backend
+	ActiveDirList   *DirList
+	UI              *UI
+	DotfilesFlag    bool
+	InputCount      string
+	BackendPointer  *Backend
+	SortingCriteria int
 }
 
 func (t *Tab) Select(n int, initialIndex int, direction int) {
@@ -55,8 +56,8 @@ func (t *Tab) Select(n int, initialIndex int, direction int) {
 	case DirectionRight:
 		fsItem := acDl.GetItemAtIndex(acDl.selectedItemIndex)
 		if fsItem.Metadata.Type == Folder && fsItem.Metadata.Readable {
-			dl , ok := t.BackendPointer.DirListCache[fsItem.Path]
-			if len(dl.FilteredItems) != 0 && ok{
+			dl, ok := t.BackendPointer.DirListCache[fsItem.Path]
+			if len(dl.FilteredItems) != 0 && ok {
 				t.MakeActiveDirlist(dl)
 			}
 		}
@@ -70,10 +71,20 @@ func (t *Tab) MakeActiveDirlist(dl *DirList) {
 	// Remove dl just in case it is already present somewhere in the grid to avoid making duplicates
 	t.UI.Grid.RemoveItem(dl)
 	t.ActiveDirList = dl
+	t.EnsureCorrectSorting(dl)
 	t.UI.Grid.AddItem(dl, 1, 1, 1, 1, 0, 0, false)
 	dl.SetDotfilesVisibility(t.DotfilesFlag)
 	t.RunListChangedFunc()
 	t.UI.CurrentPath.SetText(dl.Path)
+}
+
+func (t *Tab) EnsureCorrectSorting(dl *DirList) {
+	if dl.SortingCriteria == t.SortingCriteria || dl == nil{
+		return
+	}
+
+	SortByCriteria(dl.FSItems, t.SortingCriteria)
+	SortByCriteria(dl.FilteredItems, t.SortingCriteria)
 }
 
 func (t *Tab) SetDotfilesVisibility(visibility bool) {
@@ -100,7 +111,7 @@ func (t *Tab) RunListChangedFunc() {
 		if fsItem.Metadata.Type == Folder {
 			if fsItem.Metadata.Readable {
 				dl, ok := t.BackendPointer.DirListCache[fsItem.Path]
-				
+
 				if ok {
 					dl.SetDotfilesVisibility(t.DotfilesFlag)
 					if len(dl.FilteredItems) == 0 {
@@ -135,15 +146,23 @@ func (t *Tab) RunListChangedFunc() {
 		}
 	}
 
+	d, ok := l.(*DirList)
+	if ok {
+		t.EnsureCorrectSorting(d)
+	}
+	d, ok = r.(*DirList)
+	if ok {
+		t.EnsureCorrectSorting(d)
+	}
 	t.UpdateGrid(l, r)
 }
 
-func (t *Tab) UpdateGrid(l , r tview.Primitive) {
-	if t.UI.LeftPane != nil && l != nil && t.UI.LeftPane != t.ActiveDirList{
+func (t *Tab) UpdateGrid(l, r tview.Primitive) {
+	if t.UI.LeftPane != nil && l != nil && t.UI.LeftPane != t.ActiveDirList {
 		t.UI.Grid.RemoveItem(t.UI.LeftPane)
 	}
 
-	if t.UI.RightPane != nil && r != nil && t.UI.RightPane != t.ActiveDirList{
+	if t.UI.RightPane != nil && r != nil && t.UI.RightPane != t.ActiveDirList {
 		t.UI.Grid.RemoveItem(t.UI.RightPane)
 	}
 
@@ -154,7 +173,7 @@ func (t *Tab) UpdateGrid(l , r tview.Primitive) {
 
 	if r != nil {
 		t.UI.RightPane = r
-	t.UI.Grid.AddItem(t.UI.RightPane, 1, 2, 1, 1, 0, 0, false)
+		t.UI.Grid.AddItem(t.UI.RightPane, 1, 2, 1, 1, 0, 0, false)
 	}
 
 }

@@ -5,8 +5,6 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
-	"sort"
-	"strings"
 	"syscall"
 	"time"
 
@@ -17,10 +15,6 @@ import (
 const (
 	Folder = iota
 	File
-)
-
-const (
-	DefaultSort = iota
 )
 
 type DirList struct {
@@ -168,57 +162,6 @@ func NewDirList(path string) (*DirList, error) {
 	return &DirList{tview.NewBox(), fsItems, filteredItems, path, true, 0, 0, DefaultSort}, nil
 }
 
-type FSItemsDefaultSort []*FSItem
-
-func (fsi FSItemsDefaultSort) Len() int {
-	return len(fsi)
-}
-
-func (fsi FSItemsDefaultSort) Less(i, j int) bool {
-	fsI := fsi[i]
-	fsJ := fsi[j]
-
-	if (fsI.Metadata.Dotfile == fsJ.Metadata.Dotfile) && (fsI.Metadata.Type == fsJ.Metadata.Type) {
-		iName := strings.ToLower(fsI.Name)
-		jName := strings.ToLower(fsJ.Name)
-
-		return iName < jName
-	}
-
-	if fsI.Metadata.Dotfile && fsI.Metadata.Type == File {
-		return false
-	}
-
-
-	if fsI.Metadata.Dotfile && fsI.Metadata.Type == Folder {
-		return true
-	}
-
-	if fsI.Metadata.Type == File {
-		return !(fsJ.Metadata.Type == Folder)
-	}
-
-
-	if fsI.Metadata.Type == Folder {
-		return fsJ.Metadata.Type == File
-	}
-
-	return false
-
-}
-
-func (fsi FSItemsDefaultSort) Swap(i, j int) {
-	fsI := fsi[i]
-	fsi[i] = fsi[j]
-	fsi[j] = fsI
-}
-
-func SortByCriteria(fsItems []*FSItem, sortingCriteria int) {
-	switch sortingCriteria {
-	case DefaultSort:
-		sort.Sort(FSItemsDefaultSort(fsItems))
-	}
-}
 
 func (dl *DirList) Draw(screen tcell.Screen) {
 	textStyle := tcell.StyleDefault
