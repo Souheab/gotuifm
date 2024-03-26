@@ -11,16 +11,15 @@ import (
 
 var PermissionDeniedTextBox *tview.TextView
 var EmptyDirTextBox *tview.TextView
+var EmptyBox *tview.Box = tview.NewBox()
 
 type UI struct {
 	ListCache   map[string]*tview.List
 	Grid        *tview.Grid
+	LeftPane    tview.Primitive
+	RightPane   tview.Primitive
 	CurrentPath *tview.TextView
 	Footer      *tview.TextView
-}
-
-func (ui *UI) SetMainList(l *tview.List) {
-	ui.Grid.AddItem(l, 1, 1, 3, 1, 0, 0, true)
 }
 
 func InitUI() *UI {
@@ -57,5 +56,5 @@ func InitUI() *UI {
 
 	listCache := make(map[string]*tview.List)
 
-	return &UI{listCache, grid, currentPath, footer}
+	return &UI{listCache, grid,  nil, nil,  currentPath, footer}
 }

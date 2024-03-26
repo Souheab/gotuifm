@@ -1,13 +1,14 @@
 package main
 
 import (
-	"os"
 	"time"
 )
 
 const (
 	TickTime = time.Millisecond * 10
 )
+
+var ExitProgramFlag bool = false
 
 func RunApp(options AppOptions) {
 	b := InitAppBackend(*options.WorkingDirectory)
@@ -27,11 +28,14 @@ func RunApp(options AppOptions) {
 	for {
 		b.Draw()
 		b.HandleKeyEvent()
+		if ExitProgramFlag {
+			return
+		}
 		time.Sleep(TickTime)
 	}
 }
 
 func (b *Backend) ExitApp() {
 	b.Screen.Fini()
-	os.Exit(0)
+	ExitProgramFlag = true
 }

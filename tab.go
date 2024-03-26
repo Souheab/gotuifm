@@ -65,6 +65,8 @@ func (t *Tab) Select(n int, initialIndex int, direction int) {
 
 func (t *Tab) MakeActiveDirlist(dl *DirList) {
 	t.UI.Grid.RemoveItem(t.ActiveDirList)
+	// Remove dl just in case it is already present somewhere in the grid to avoid making duplicates
+	t.UI.Grid.RemoveItem(dl)
 	t.ActiveDirList = dl
 	t.UI.Grid.AddItem(dl, 1, 1, 1, 1, 0, 0, false)
 	dl.SetDotfilesVisibility(t.DotfilesFlag)
@@ -88,6 +90,8 @@ func (t *Tab) ToggleDotfilesVisibility() {
 func (t *Tab) RunListChangedFunc() {
 	activeDl := t.ActiveDirList
 	fsItem := activeDl.GetItemAtIndex(t.ActiveDirList.selectedItemIndex)
+	var l tview.Primitive = nil
+	var r tview.Primitive = nil
 	if fsItem == nil {
 		log.Fatalf("error in listChangedFunc")
 	} else {
@@ -96,27 +100,50 @@ func (t *Tab) RunListChangedFunc() {
 				dl := t.BackendPointer.DirListCacheGetOtherwiseAdd(fsItem.Path)
 				dl.SetDotfilesVisibility(t.DotfilesFlag)
 				if len(dl.FilteredItems) == 0 {
-					t.UI.Grid.AddItem(EmptyDirTextBox, 1, 2, 1, 1, 0, 0, false)
+					r = EmptyDirTextBox
 				} else {
-					t.UI.Grid.AddItem(dl, 1, 2, 1, 1, 0, 0, false)
+					r = dl
 				}
 			} else {
-				t.UI.Grid.AddItem(PermissionDeniedTextBox, 1, 2, 1, 1, 0, 0, false)
+				r = PermissionDeniedTextBox
 			}
 		} else {
 			textBox := tview.NewTextView().SetLabel(fmt.Sprintf("File: %v, \npath: %v", fsItem.Name, fsItem.Path))
-			t.UI.Grid.AddItem(textBox, 1, 2, 1, 1, 0, 0, false)
+			r = textBox
 		}
 
 		if activeDl.Path == "/" {
-			t.UI.Grid.AddItem(tview.NewBox(), 1, 0, 1, 1, 0, 0, false)
+			l = EmptyBox
 		} else {
 			parentPath := filepath.Dir(activeDl.Path)
 			dl := t.BackendPointer.DirListCacheGetOtherwiseAdd(parentPath)
 			dl.SetDotfilesVisibility(t.DotfilesFlag)
-			t.UI.Grid.AddItem(dl, 1, 0, 1, 1, 0, 0, false)
+			l = dl
 		}
 	}
+
+	t.UpdateGrid(l, r)
+}
+
+func (t *Tab) UpdateGrid(l , r tview.Primitive) {
+	if t.UI.LeftPane != nil && l != nil && t.UI.LeftPane != t.ActiveDirList{
+		t.UI.Grid.RemoveItem(t.UI.LeftPane)
+	}
+
+	if t.UI.RightPane != nil && r != nil && t.UI.RightPane != t.ActiveDirList{
+		t.UI.Grid.RemoveItem(t.UI.RightPane)
+	}
+
+	if l != nil {
+		t.UI.LeftPane = l
+		t.UI.Grid.AddItem(t.UI.LeftPane, 1, 0, 1, 1, 0, 0, false)
+	}
+
+	if r != nil {
+		t.UI.RightPane = r
+	t.UI.Grid.AddItem(t.UI.RightPane, 1, 2, 1, 1, 0, 0, false)
+	}
+
 }
 
 func (t *Tab) UpdateFooter() {
