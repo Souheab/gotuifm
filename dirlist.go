@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"sort"
+	"strings"
 	"syscall"
 	"time"
 
@@ -17,6 +19,10 @@ const (
 	File
 )
 
+const (
+	DefaultSort = iota
+)
+
 type DirList struct {
 	*tview.Box
 	FSItems           []*FSItem
@@ -25,6 +31,7 @@ type DirList struct {
 	DotfilesFlag      bool
 	selectedItemIndex int
 	itemOffset        int
+	SortingCriteria   int
 }
 
 func (dl *DirList) GetItemAtIndex(index int) *FSItem {
@@ -111,6 +118,7 @@ type FSItemMetadata struct {
 	UserString    string
 	GroupString   string
 	Icon          rune
+	Dotfile       bool
 }
 
 func NewDirList(path string) (*DirList, error) {
@@ -137,22 +145,79 @@ func NewDirList(path string) (*DirList, error) {
 		ownerUser, _ := user.LookupId(fmt.Sprintf("%d", uid))
 		group, _ := user.LookupGroupId(fmt.Sprintf("%d", gid))
 
+		isDotfile := name[0] == '.'
+
 		if fsEntry.IsDir() {
-			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), "", lastModified, permsString, fileSize, ownerUser.Username, group.Name, FolderIcon}
+			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), "", lastModified, permsString, fileSize, ownerUser.Username, group.Name, FolderIcon, isDotfile}
 			folder := FSItem{fsItemPath, name, metadata}
 			folders = append(folders, &folder)
 		} else {
 			fileExtension := filepath.Ext(fsItemPath)
 			icon := GetFileIcon(fileExtension)
-			metadata := FSItemMetadata{File, true, fileExtension, lastModified, permsString, fileSize, ownerUser.Username, group.Name, icon}
+			metadata := FSItemMetadata{File, true, fileExtension, lastModified, permsString, fileSize, ownerUser.Username, group.Name, icon, isDotfile}
 			file := FSItem{fsItemPath, name, metadata}
 			files = append(files, &file)
 		}
 	}
 
 	fsItems := append(folders, files...)
+	filteredItems := append([]*FSItem(nil), fsItems...)
+	SortByCriteria(fsItems, DefaultSort)
+	
 
-	return &DirList{tview.NewBox(), fsItems, fsItems, path, true, 0, 0}, nil
+	return &DirList{tview.NewBox(), fsItems, filteredItems, path, true, 0, 0, DefaultSort}, nil
+}
+
+type FSItemsDefaultSort []*FSItem
+
+func (fsi FSItemsDefaultSort) Len() int {
+	return len(fsi)
+}
+
+func (fsi FSItemsDefaultSort) Less(i, j int) bool {
+	fsI := fsi[i]
+	fsJ := fsi[j]
+
+	if (fsI.Metadata.Dotfile == fsJ.Metadata.Dotfile) && (fsI.Metadata.Type == fsJ.Metadata.Type) {
+		iName := strings.ToLower(fsI.Name)
+		jName := strings.ToLower(fsJ.Name)
+
+		return iName < jName
+	}
+
+	if fsI.Metadata.Dotfile && fsI.Metadata.Type == File {
+		return false
+	}
+
+
+	if fsI.Metadata.Dotfile && fsI.Metadata.Type == Folder {
+		return true
+	}
+
+	if fsI.Metadata.Type == File {
+		return !(fsJ.Metadata.Type == Folder)
+	}
+
+
+	if fsI.Metadata.Type == Folder {
+		return fsJ.Metadata.Type == File
+	}
+
+	return false
+
+}
+
+func (fsi FSItemsDefaultSort) Swap(i, j int) {
+	fsI := fsi[i]
+	fsi[i] = fsi[j]
+	fsi[j] = fsI
+}
+
+func SortByCriteria(fsItems []*FSItem, sortingCriteria int) {
+	switch sortingCriteria {
+	case DefaultSort:
+		sort.Sort(FSItemsDefaultSort(fsItems))
+	}
 }
 
 func (dl *DirList) Draw(screen tcell.Screen) {
