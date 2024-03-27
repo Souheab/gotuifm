@@ -11,7 +11,7 @@ import (
 
 var PermissionDeniedTextBox *tview.TextView
 var EmptyDirTextBox *tview.TextView
-var EmptyBox *tview.Box = tview.NewBox()
+var EmptyBox *tview.Box
 var LoadingTextBox *tview.TextView
 
 type UI struct {
@@ -28,6 +28,7 @@ func InitUI() *UI {
 
 	PermissionDeniedTextBox = tview.NewTextView().SetLabel("[white:red]Permission Denied")
 	EmptyDirTextBox = tview.NewTextView().SetLabel("[white::r]empty")
+	EmptyBox = tview.NewBox()
 	LoadingTextBox = tview.NewTextView().SetLabel("[white::r]loading...")
 
 	hostname, _ := os.Hostname()

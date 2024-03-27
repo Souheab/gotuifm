@@ -29,7 +29,6 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-
 	if !PathExists(*wdFlag) {
 		fmt.Fprintln(os.Stdout, "Error: Invalid path.")
 		os.Exit(1)

@@ -115,7 +115,7 @@ type FSItemMetadata struct {
 	Dotfile       bool
 }
 
-func NewDirList(path string) (*DirList, error) {
+func (b *Backend) NewDirList(path string) (*DirList, error) {
 
 	fsDirEntry, err := os.ReadDir(path)
 	if err != nil {
@@ -137,18 +137,18 @@ func NewDirList(path string) (*DirList, error) {
 		gid := stat.Gid
 
 		ownerUser, _ := user.LookupId(fmt.Sprintf("%d", uid))
-		group, _ := user.LookupGroupId(fmt.Sprintf("%d", gid))
+		groupName := b.GetGroupName(gid)
 
 		isDotfile := name[0] == '.'
 
 		if fsEntry.IsDir() {
-			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), "", lastModified, permsString, fileSize, ownerUser.Username, group.Name, FolderIcon, isDotfile}
+			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), "", lastModified, permsString, fileSize, ownerUser.Username, groupName, FolderIcon, isDotfile}
 			folder := FSItem{fsItemPath, name, metadata}
 			folders = append(folders, &folder)
 		} else {
 			fileExtension := filepath.Ext(fsItemPath)
 			icon := GetFileIcon(fileExtension)
-			metadata := FSItemMetadata{File, true, fileExtension, lastModified, permsString, fileSize, ownerUser.Username, group.Name, icon, isDotfile}
+			metadata := FSItemMetadata{File, true, fileExtension, lastModified, permsString, fileSize, ownerUser.Username, groupName, icon, isDotfile}
 			file := FSItem{fsItemPath, name, metadata}
 			files = append(files, &file)
 		}
@@ -157,11 +157,9 @@ func NewDirList(path string) (*DirList, error) {
 	fsItems := append(folders, files...)
 	filteredItems := append([]*FSItem(nil), fsItems...)
 	SortByCriteria(fsItems, DefaultSort)
-	
 
 	return &DirList{tview.NewBox(), fsItems, filteredItems, path, true, 0, 0, DefaultSort}, nil
 }
-
 
 func (dl *DirList) Draw(screen tcell.Screen) {
 	textStyle := tcell.StyleDefault
