@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"time"
 
 	"github.com/rivo/tview"
 )
@@ -60,6 +61,8 @@ func (t *Tab) Select(n int, initialIndex int, direction int) {
 			if ok && len(dl.FilteredItems) != 0 {
 				t.MakeActiveDirlist(dl)
 			}
+		} else if fsItem.Metadata.Type == File {
+			t.BackendPointer.Open(fsItem.Path)
 		}
 	}
 
@@ -75,7 +78,6 @@ func (t *Tab) MakeActiveDirlist(dl *DirList) {
 	t.UI.Grid.AddItem(dl, 1, 1, 1, 1, 0, 0, false)
 	dl.SetDotfilesVisibility(t.DotfilesFlag)
 	t.RunListChangedFunc()
-	t.UI.CurrentPath.SetText(dl.Path)
 }
 
 func (t *Tab) EnsureCorrectSorting(dl *DirList) {
@@ -85,6 +87,11 @@ func (t *Tab) EnsureCorrectSorting(dl *DirList) {
 
 	SortByCriteria(dl.FSItems, t.SortingCriteria)
 	SortByCriteria(dl.FilteredItems, t.SortingCriteria)
+	dl.SortingCriteria = t.SortingCriteria
+}
+
+func (t *Tab) SetSortingCriteria(criteria int) {
+	t.SortingCriteria = criteria
 }
 
 func (t *Tab) SetDotfilesVisibility(visibility bool) {
@@ -103,6 +110,8 @@ func (t *Tab) ToggleDotfilesVisibility() {
 func (t *Tab) RunListChangedFunc() {
 	activeDl := t.ActiveDirList
 	fsItem := activeDl.GetItemAtIndex(t.ActiveDirList.selectedItemIndex)
+	t.UI.CurrentPath.SetText(fsItem.Path)
+
 	var l tview.Primitive = nil
 	var r tview.Primitive = nil
 	if fsItem == nil {
@@ -175,7 +184,6 @@ func (t *Tab) UpdateGrid(l, r tview.Primitive) {
 		t.UI.RightPane = r
 		t.UI.Grid.AddItem(t.UI.RightPane, 1, 2, 1, 1, 0, 0, false)
 	}
-
 }
 
 func (t *Tab) UpdateFooter() {
@@ -187,6 +195,14 @@ func (t *Tab) UpdateFooter() {
 	groupString := fsItem.Metadata.GroupString
 	footerString := fmt.Sprintf("%s %s %s %s %s", permsString, userString, groupString, timeString, fileSizeString)
 	t.UI.Footer.SetText(footerString)
+}
+
+func (t *Tab) EchoFooter(message string) {
+	go func() {
+		t.UI.Footer.SetText(message)
+		time.Sleep(3*time.Second)
+		t.UpdateFooter()
+	}()
 }
 
 func (t *Tab) AddToInputCount(inputKeyRune rune) {

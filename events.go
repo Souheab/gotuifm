@@ -34,7 +34,7 @@ func (b *Backend) ProcessDirListEventsWorker() {
 	}
 }
 
-func (b *Backend) HandleKeyEvent() {
+func (b *Backend) HandleKeyEvent(inputContext *InputContext) {
 	ch := b.InputChan
 	select {
 	case ev := <-ch:
@@ -44,10 +44,27 @@ func (b *Backend) HandleKeyEvent() {
 			b.ExitApp()
 		case tcell.KeyEsc:
 			t.InputCount = ""
+			inputContext.Clear()
 			return
 		}
 
 		inputKeyRune := ev.Rune()
+		if inputContext.SortMenu {
+			switch inputKeyRune {
+			case 'd', 'D':
+				b.ActiveTab.SetSortingCriteria(DefaultSort)
+				b.ActiveTab.EchoFooter("Sorting criteria set to default")
+			case 'T':
+				b.ActiveTab.SetSortingCriteria(TimeSort)
+				b.ActiveTab.EchoFooter("Sorting criteria set to sort by time")
+			case 't':
+				b.ActiveTab.SetSortingCriteria(TimeSortReverse)
+				b.ActiveTab.EchoFooter("Sorting criteria set to sort by reverse time")
+			}
+			b.ActiveTab.EnsureCorrectSorting(t.ActiveDirList)
+			inputContext.Clear()
+		}
+
 		if inputKeyRune >= '0' && inputKeyRune <= '9' {
 			t.AddToInputCount(inputKeyRune)
 			return
@@ -72,6 +89,8 @@ func (b *Backend) HandleKeyEvent() {
 			t.ToggleDotfilesVisibility()
 		case 'q', 'Q':
 			b.ExitApp()
+		case 's', 'S':
+			inputContext.SortMenu = true
 		}
 		t.RunListChangedFunc()
 		t.ActiveDirList.AdjustOffset()

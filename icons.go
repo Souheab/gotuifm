@@ -10,6 +10,7 @@ const (
 	MarkdownIcon = ''
 	CIcon        = ''
 	VideoIcon    = ''
+	PDFIcon      = ''
 )
 
 func GetFileIcon(fileExtension string) rune {
@@ -19,6 +20,10 @@ func GetFileIcon(fileExtension string) rune {
 
 	case ".mkv", ".mp4", ".webm":
 		return VideoIcon
+
+  // Documents
+	case ".pdf":
+		return PDFIcon
 
 	// Config Files
 	case ".mod":
