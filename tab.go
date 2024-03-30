@@ -35,7 +35,7 @@ func (t *Tab) Select(n int, initialIndex int, direction int) {
 		for range n {
 			path = filepath.Dir(path)
 		}
-		dl, ok := t.BackendPointer.DirListCache[path]
+		dl, ok := t.BackendPointer.GetDirList(path)
 		if ok {
 			t.MakeActiveDirlist(dl)
 		}
@@ -57,7 +57,7 @@ func (t *Tab) Select(n int, initialIndex int, direction int) {
 	case DirectionRight:
 		fsItem := acDl.GetItemAtIndex(acDl.selectedItemIndex)
 		if fsItem.Metadata.Type == Folder && fsItem.Metadata.Readable {
-			dl, ok := t.BackendPointer.DirListCache[fsItem.Path]
+			dl, ok := t.BackendPointer.GetDirList(fsItem.Path)
 			if ok && len(dl.FilteredItems) != 0 {
 				t.MakeActiveDirlist(dl)
 			}
@@ -119,7 +119,7 @@ func (t *Tab) RunListChangedFunc() {
 	} else {
 		if fsItem.Metadata.Type == Folder {
 			if fsItem.Metadata.Readable {
-				dl, ok := t.BackendPointer.DirListCache[fsItem.Path]
+				dl, ok := t.BackendPointer.GetDirList(fsItem.Path)
 
 				if ok {
 					dl.SetDotfilesVisibility(t.DotfilesFlag)
@@ -129,7 +129,7 @@ func (t *Tab) RunListChangedFunc() {
 						r = dl
 					}
 				} else {
-					go t.BackendPointer.DirListCacheAdd(fsItem.Path)
+					go t.BackendPointer.DirListCacheAdd(fsItem.Path, nil)
 					r = LoadingTextBox
 				}
 			} else {
@@ -144,12 +144,12 @@ func (t *Tab) RunListChangedFunc() {
 			l = EmptyBox
 		} else {
 			parentPath := filepath.Dir(activeDl.Path)
-			dl, ok := t.BackendPointer.DirListCache[parentPath]
+			dl, ok := t.BackendPointer.GetDirList(parentPath)
 			if ok {
 				dl.SetDotfilesVisibility(t.DotfilesFlag)
 				l = dl
 			} else {
-				go t.BackendPointer.DirListCacheAdd(parentPath)
+				go t.BackendPointer.DirListCacheAdd(parentPath, &activeDl.Path)
 				l = LoadingTextBox
 			}
 		}
@@ -199,6 +199,12 @@ func (t *Tab) UpdateFooter() {
 
 func (t *Tab) EchoFooter(message string) {
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.BackendPointer.Screen.Fini()
+				panic(r)
+			}
+		}()
 		t.UI.Footer.SetText(message)
 		time.Sleep(3*time.Second)
 		t.UpdateFooter()

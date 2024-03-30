@@ -15,7 +15,7 @@ const (
 
 func GetFileIcon(fileExtension string) rune {
 	switch fileExtension {
-	case ".png", ".jpeg":
+	case ".png", ".jpeg", ".jpg":
 		return ImageIcon
 
 	case ".mkv", ".mp4", ".webm":

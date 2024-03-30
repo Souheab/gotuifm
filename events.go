@@ -6,7 +6,22 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
+type InputContext struct {
+	SortMenu bool
+}
+
+func (ic *InputContext) Clear(){
+	ic.SortMenu = false
+}
+
 func (b *Backend) ProcessScreenEventsWorker() {
+	defer func() {
+		if r := recover(); r != nil {
+			b.Screen.Fini()
+			panic(r)
+		}
+	}()
+
 	ch := b.InputChan
 
 	for {
@@ -25,6 +40,12 @@ func (b *Backend) ProcessScreenEventsWorker() {
 }
 
 func (b *Backend) ProcessDirListEventsWorker() {
+	defer func() {
+		if r := recover(); r != nil {
+			b.Screen.Fini()
+			panic(r)
+		}
+	}()
 	ch := b.DirListEventsChan
 
 	for {
@@ -34,8 +55,20 @@ func (b *Backend) ProcessDirListEventsWorker() {
 	}
 }
 
-func (b *Backend) HandleKeyEvent(inputContext *InputContext) {
+func (b *Backend) HandleEvents() {
+	ch := b.DirListEventsChan
+	b.HandleKeyEvent()
+	select {
+	case <- ch:
+		b.ActiveTab.RunListChangedFunc()
+		b.Draw()
+	default:
+	}
+}
+
+func (b *Backend) HandleKeyEvent() {
 	ch := b.InputChan
+	inputContext := b.InputContext
 	select {
 	case ev := <-ch:
 		t := b.ActiveTab
@@ -87,6 +120,8 @@ func (b *Backend) HandleKeyEvent(inputContext *InputContext) {
 			t.Select(1, 0, DirectionRight)
 		case '.':
 			t.ToggleDotfilesVisibility()
+		case 'e':
+			t.BackendPointer.OpenEditor(t.ActiveDirList.GetSelectedItem().Path)
 		case 'q', 'Q':
 			b.ExitApp()
 		case 's', 'S':
@@ -94,5 +129,6 @@ func (b *Backend) HandleKeyEvent(inputContext *InputContext) {
 		}
 		t.RunListChangedFunc()
 		t.ActiveDirList.AdjustOffset()
+	default:
 	}
 }

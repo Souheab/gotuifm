@@ -52,7 +52,7 @@ func InitUI() *UI {
 
 	grid := tview.NewGrid().
 		SetRows(1, 0, 1).
-		SetColumns(0, 0, 0).
+		SetColumns(0, -2, -3).
 		SetBorders(true).
 		AddItem(header, 0, 0, 1, 3, 0, 0, false).
 		AddItem(footer, 2, 0, 1, 3, 0, 0, false)

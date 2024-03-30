@@ -115,17 +115,17 @@ type FSItemMetadata struct {
 	Dotfile       bool
 }
 
-func (b *Backend) NewDirList(path string) (*DirList, error) {
+func (b *Backend) NewDirList(path string, selectedItemPath *string) (*DirList, error) {
 
 	fsDirEntry, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 
-	files := make([]*FSItem, 0, 0)
-	folders := make([]*FSItem, 0, 0)
+	fsItems := make([]*FSItem, 0, 0)
+	selectedItemIndex := 0
 
-	for _, fsEntry := range fsDirEntry {
+	for i, fsEntry := range fsDirEntry {
 		name := fsEntry.Name()
 		fsItemPath, _ := filepath.Abs(filepath.Join(path, name))
 		fileInfo, _ := fsEntry.Info()
@@ -135,30 +135,39 @@ func (b *Backend) NewDirList(path string) (*DirList, error) {
 		stat := fileInfo.Sys().(*syscall.Stat_t)
 		uid := stat.Uid
 		gid := stat.Gid
+		fileExtension := ""
+		readable := true
+		fsItemType := File
+		icon := FolderIcon
 
 		ownerUser, _ := user.LookupId(fmt.Sprintf("%d", uid))
 		groupName := b.GetGroupName(gid)
 
 		isDotfile := name[0] == '.'
 
+		var metadata FSItemMetadata
 		if fsEntry.IsDir() {
-			metadata := FSItemMetadata{Folder, PathReadable(fsItemPath), "", lastModified, permsString, fileSize, ownerUser.Username, groupName, FolderIcon, isDotfile}
-			folder := FSItem{fsItemPath, name, metadata}
-			folders = append(folders, &folder)
+			readable = PathReadable(fsItemPath)
+			fsItemType = Folder
 		} else {
-			fileExtension := filepath.Ext(fsItemPath)
-			icon := GetFileIcon(fileExtension)
-			metadata := FSItemMetadata{File, true, fileExtension, lastModified, permsString, fileSize, ownerUser.Username, groupName, icon, isDotfile}
-			file := FSItem{fsItemPath, name, metadata}
-			files = append(files, &file)
+			fileExtension = filepath.Ext(fsItemPath)
+			icon = GetFileIcon(fileExtension)
 		}
+
+		metadata = FSItemMetadata{fsItemType, readable, fileExtension, lastModified, permsString, fileSize, ownerUser.Username, groupName, icon, isDotfile}
+
+		if selectedItemPath != nil && *selectedItemPath == fsItemPath {
+			selectedItemIndex = i
+		}
+
+		fsItem := &FSItem{fsItemPath, name, metadata}
+		fsItems = append(fsItems, fsItem)
 	}
 
-	fsItems := append(folders, files...)
 	filteredItems := append([]*FSItem(nil), fsItems...)
 	SortByCriteria(fsItems, DefaultSort)
 
-	return &DirList{tview.NewBox(), fsItems, filteredItems, path, true, 0, 0, DefaultSort}, nil
+	return &DirList{tview.NewBox(), fsItems, filteredItems, path, true, selectedItemIndex, 0, DefaultSort}, nil
 }
 
 func (dl *DirList) Draw(screen tcell.Screen) {

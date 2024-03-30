@@ -10,18 +10,10 @@ const (
 
 var ExitProgramFlag bool = false
 
-type InputContext struct {
-	SortMenu bool
-}
-
-func (ic *InputContext) Clear(){
-	ic.SortMenu = false
-}
 
 func RunApp(options AppOptions) {
 	b := InitAppBackend(*options.WorkingDirectory)
 	s := b.Screen
-	inputContext := &InputContext{false}
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -33,11 +25,11 @@ func RunApp(options AppOptions) {
 	s.Init()
 
 	go b.ProcessScreenEventsWorker()
-	go b.ProcessDirListEventsWorker()
+	// go b.ProcessDirListEventsWorker()
 
 	for {
 		b.Draw()
-		b.HandleKeyEvent(inputContext)
+		b.HandleEvents()
 		if ExitProgramFlag {
 			return
 		}
