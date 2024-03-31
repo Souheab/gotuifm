@@ -25,9 +25,9 @@ func RunApp(options AppOptions) {
 	s.Init()
 
 	go b.ProcessScreenEventsWorker()
-	// go b.ProcessDirListEventsWorker()
 
 	for {
+		// b.CheckSelectedFilePreview()
 		b.Draw()
 		b.HandleEvents()
 		if ExitProgramFlag {

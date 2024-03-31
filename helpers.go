@@ -43,6 +43,24 @@ func ClearArea(s tcell.Screen, x, y, width, height int) {
 	}
 }
 
+func GetTerminalImageProtocol(term_info string) string {
+	switch term_info {
+	case "WezTerm":
+		return "iterm2"
+	}
+
+	return ""
+}
+
+func IsImageFileExtension (extension string) bool {
+	switch extension {
+	case ".png", ".jpeg", ".jpg":
+		return true
+	}
+
+	return false
+}
+
 // Opens with xdg-open, assumes user has xdg-utils package installed
 // Maybe create a seperate package for this?
 func (b *Backend) Open(path string) {

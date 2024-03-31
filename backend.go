@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
 	"sync"
@@ -31,6 +33,7 @@ type Backend struct {
 	DirListEventsChan chan *string
 	GroupNameCache    map[uint32]string
 	InputContext      *InputContext
+	TerminalInfo      string
 }
 
 func InitAppBackend(startingPath string) *Backend {
@@ -41,7 +44,9 @@ func InitAppBackend(startingPath string) *Backend {
 	dirListEventsChan := make(chan *string)
 	s, _ := tcell.NewScreen()
 	inputContext := &InputContext{false}
-	b := &Backend{tabs, nil, dlc, sync.RWMutex{}, s, inputChan, dirListEventsChan, gnc, inputContext}
+	terminalName:= os.Getenv("TERM_PROGRAM")
+
+	b := &Backend{tabs, nil, dlc, sync.RWMutex{}, s, inputChan, dirListEventsChan, gnc, inputContext, terminalName}
 
 	ui := InitUI()
 	b.DirListCacheAddNonConcurrent(startingPath)
@@ -134,4 +139,14 @@ func (b *Backend) Draw() {
 	grid.SetRect(0, 0, w, h)
 	grid.Draw(b.Screen)
 	s.Show()
+}
+
+func (b *Backend) CheckSelectedFilePreview() {
+	selectedFsItem := b.ActiveTab.ActiveDirList.GetSelectedItem()
+	if !IsImageFileExtension(selectedFsItem.Metadata.FileExtension) {
+		return
+	}
+	cmd := exec.Command("chafa", "-s" , "x10" ,selectedFsItem.Path, "-f" , "iterm2", "--polite", "on", "--clear", "--align", "mid,right")
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }

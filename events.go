@@ -10,7 +10,7 @@ type InputContext struct {
 	SortMenu bool
 }
 
-func (ic *InputContext) Clear(){
+func (ic *InputContext) Clear() {
 	ic.SortMenu = false
 }
 
@@ -39,96 +39,76 @@ func (b *Backend) ProcessScreenEventsWorker() {
 	}
 }
 
-func (b *Backend) ProcessDirListEventsWorker() {
-	defer func() {
-		if r := recover(); r != nil {
-			b.Screen.Fini()
-			panic(r)
-		}
-	}()
-	ch := b.DirListEventsChan
-
-	for {
-		<- ch
-		b.ActiveTab.RunListChangedFunc()
-		b.Draw()
-	}
-}
-
 func (b *Backend) HandleEvents() {
-	ch := b.DirListEventsChan
-	b.HandleKeyEvent()
+	ech := b.DirListEventsChan
+	ich := b.InputChan
 	select {
-	case <- ch:
+	case <-ech:
 		b.ActiveTab.RunListChangedFunc()
 		b.Draw()
-	default:
+	case kev := <- ich:
+		b.HandleKeyEvent(kev)
 	}
 }
 
-func (b *Backend) HandleKeyEvent() {
-	ch := b.InputChan
+func (b *Backend) HandleKeyEvent(kev *tcell.EventKey) {
 	inputContext := b.InputContext
-	select {
-	case ev := <-ch:
-		t := b.ActiveTab
-		switch ev.Key() {
-		case tcell.KeyCtrlC, tcell.KeyCtrlD:
-			b.ExitApp()
-		case tcell.KeyEsc:
-			t.InputCount = ""
-			inputContext.Clear()
-			return
-		}
-
-		inputKeyRune := ev.Rune()
-		if inputContext.SortMenu {
-			switch inputKeyRune {
-			case 'd', 'D':
-				b.ActiveTab.SetSortingCriteria(DefaultSort)
-				b.ActiveTab.EchoFooter("Sorting criteria set to default")
-			case 'T':
-				b.ActiveTab.SetSortingCriteria(TimeSort)
-				b.ActiveTab.EchoFooter("Sorting criteria set to sort by time")
-			case 't':
-				b.ActiveTab.SetSortingCriteria(TimeSortReverse)
-				b.ActiveTab.EchoFooter("Sorting criteria set to sort by reverse time")
-			}
-			b.ActiveTab.EnsureCorrectSorting(t.ActiveDirList)
-			inputContext.Clear()
-		}
-
-		if inputKeyRune >= '0' && inputKeyRune <= '9' {
-			t.AddToInputCount(inputKeyRune)
-			return
-		}
-
-		inputTimes := 1
-		if t.InputCount != "" {
-			inputTimes, _ = strconv.Atoi(t.InputCount)
-			t.ClearInputCount()
-		}
-
-		switch inputKeyRune {
-		case 'h', 'H':
-			t.Select(1, 0, DirectionLeft)
-		case 'j', 'J':
-			t.Select(inputTimes, 0, DirectionDown)
-		case 'k', 'K':
-			t.Select(inputTimes, 0, DirectionUp)
-		case 'l', 'L':
-			t.Select(1, 0, DirectionRight)
-		case '.':
-			t.ToggleDotfilesVisibility()
-		case 'e':
-			t.BackendPointer.OpenEditor(t.ActiveDirList.GetSelectedItem().Path)
-		case 'q', 'Q':
-			b.ExitApp()
-		case 's', 'S':
-			inputContext.SortMenu = true
-		}
-		t.RunListChangedFunc()
-		t.ActiveDirList.AdjustOffset()
-	default:
+	t := b.ActiveTab
+	switch kev.Key() {
+	case tcell.KeyCtrlC, tcell.KeyCtrlD:
+		b.ExitApp()
+	case tcell.KeyEsc:
+		t.InputCount = ""
+		inputContext.Clear()
+		return
 	}
+
+	inputKeyRune := kev.Rune()
+	if inputContext.SortMenu {
+		switch inputKeyRune {
+		case 'd', 'D':
+			b.ActiveTab.SetSortingCriteria(DefaultSort)
+			b.ActiveTab.EchoFooter("Sorting criteria set to default")
+		case 'T':
+			b.ActiveTab.SetSortingCriteria(TimeSort)
+			b.ActiveTab.EchoFooter("Sorting criteria set to sort by time")
+		case 't':
+			b.ActiveTab.SetSortingCriteria(TimeSortReverse)
+			b.ActiveTab.EchoFooter("Sorting criteria set to sort by reverse time")
+		}
+		b.ActiveTab.EnsureCorrectSorting(t.ActiveDirList)
+		inputContext.Clear()
+	}
+
+	if inputKeyRune >= '0' && inputKeyRune <= '9' {
+		t.AddToInputCount(inputKeyRune)
+		return
+	}
+
+	inputTimes := 1
+	if t.InputCount != "" {
+		inputTimes, _ = strconv.Atoi(t.InputCount)
+		t.ClearInputCount()
+	}
+
+	switch inputKeyRune {
+	case 'h', 'H':
+		t.Select(1, 0, DirectionLeft)
+	case 'j', 'J':
+		t.Select(inputTimes, 0, DirectionDown)
+	case 'k', 'K':
+		t.Select(inputTimes, 0, DirectionUp)
+	case 'l', 'L':
+		t.Select(1, 0, DirectionRight)
+	case '.':
+		t.ToggleDotfilesVisibility()
+	case 'e':
+		t.BackendPointer.OpenEditor(t.ActiveDirList.GetSelectedItem().Path)
+	case 'q', 'Q':
+		b.ExitApp()
+	case 's', 'S':
+		inputContext.SortMenu = true
+	}
+	t.RunListChangedFunc()
+	t.ActiveDirList.AdjustOffset()
 }
